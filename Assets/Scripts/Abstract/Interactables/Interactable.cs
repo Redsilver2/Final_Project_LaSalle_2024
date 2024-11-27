@@ -11,12 +11,23 @@ namespace Redsilver2.Core.Interactables
         protected bool isInteracting = false;
 
         public string InteractableName => interactableName;
+        public bool IsInteracting => isInteracting;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            InteractionManager.Instance.AddInteractableInstance(GetComponent<Collider>(), this);
+        }
 
         public virtual void Interact()
         {
             isInteracting = !isInteracting;
+            InvokeInteractableEvents();
+        }
 
-            if (!hasInteractedOnce) 
+        protected void InvokeInteractableEvents()
+        {
+            if (!hasInteractedOnce)
             {
                 InvokeOnInteractOnce(isInteracting);
                 hasInteractedOnce = true;
@@ -41,19 +52,9 @@ namespace Redsilver2.Core.Interactables
             return interactableName;
         }
 
-        public virtual Sprite GetInteractionSprite()
+        public virtual Sprite GetIcon()
         {
             return null;
-        }
-
-        protected virtual void OnEnable()
-        {
-
-        }
-
-        protected virtual void OnDisable()
-        {
-
         }
     }
 }

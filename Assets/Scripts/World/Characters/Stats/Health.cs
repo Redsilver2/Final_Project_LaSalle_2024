@@ -1,45 +1,35 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+
 namespace Redsilver2.Core.Stats
 {
     public class Health : LimitedRecoverableStat, IHealable, IDamageable
     {
-        private UnityEvent<Health> onHealed  = new UnityEvent<Health>();
-        private UnityEvent<Health> onDamaged = new UnityEvent<Health>();
-        private UnityEvent<Health> onDeath   = new UnityEvent<Health>();
+        private UnityEvent<Health> onHealed;
+        private UnityEvent<Health> onDamaged;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
-            AddOnValueChangedEvent((handler, isValueIncreasing) =>
-            {
-                if(isValueIncreasing)
-                {
-                    onHealed?.Invoke(this);
-                }
-                else
-                {
-                    if(handler.CurrentValue <= 0f)
-                    {
-                        onDeath?.Invoke(this);
-                    }
-                    else
-                    {
-                        onDamaged?.Invoke(this);
-                    }
-                }
-            });
+            base.Awake();
+            onHealed = new UnityEvent<Health>();
+            onDamaged = new UnityEvent<Health>();
         }
 
         public void Heal(float healAmount)
         {
             Increase(healAmount);
+            onHealed.Invoke(this);
         }
 
         public void Damage(float damageAmount)
         {
             Decrease(damageAmount);
+
+            if (currentValue > 0)
+            {
+                onDamaged.Invoke(this);
+            }
         }
 
         public void AddOnHealedEvent(UnityAction<Health> action)
@@ -58,15 +48,6 @@ namespace Redsilver2.Core.Stats
         public void RemoveOnDamagedEvent(UnityAction<Health> action)
         {
             onDamaged?.RemoveListener(action);
-        }
-
-        public void AddOnDeathEvent(UnityAction<Health> action)
-        {
-            onDeath?.AddListener(action);
-        }
-        public void RemoveOnDeathEvent(UnityAction<Health> action)
-        {
-            onDeath?.RemoveListener(action);
         }
     }
 }

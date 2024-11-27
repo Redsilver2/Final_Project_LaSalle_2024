@@ -1,5 +1,6 @@
 using Redsilver2.Core.Controls;
 using Redsilver2.Core.Player;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,10 +17,17 @@ namespace Redsilver2.Core.Interactables
         [Space]
         [SerializeField] private CameraPath[] interactionPaths;
 
-        protected override void Start()
+        [Space]
+        [SerializeField] private bool allowMouseInteraction = false;
+
+        private IEnumerator mouseInteractionCoroutine;
+        public ClampedCameraController ClampedController => clampedController;
+
+        protected override void Awake()
         {
             PlayerController player = PlayerController.Instance;
-            base.Start();
+            mouseInteractionCoroutine = InteractionManager.Instance.MouseInteractionRayCoroutine();
+            base.Awake();
 
             if (Camera.main.TryGetComponent(out PlayerCameraController cameraController))
             {
@@ -39,16 +47,32 @@ namespace Redsilver2.Core.Interactables
 
             if (clampedController != null)
             {
-                clampedController.SetRotationTrackerY();
+                AddOnInteractEvent(isInteracting =>
+                {
+                    clampedController.EnabledControls(false);
+                });
 
                 clampedController.AddOnPathFollowStartedEvent(() =>
                 {
+                    if (!isInteracting && allowMouseInteraction)
+                    {
+                        if (mouseInteractionCoroutine != null) StopCoroutine(mouseInteractionCoroutine);
+                    }
+
                     clampedController.ResetRotationTrackers();
                 });
 
                 clampedController.AddOnPathFollowCompletedEvent(() =>
                 {
+                    if (isInteracting && allowMouseInteraction)
+                    {
+                        if (mouseInteractionCoroutine != null) StopCoroutine(mouseInteractionCoroutine);
+                        StartCoroutine(mouseInteractionCoroutine);
+                    }
+
+                    clampedController.EnabledControls(true);
                     GameManager.SetCursorVisibility(true);
+                    Debug.LogWarning("Path followed...");
                 });
 
                 clampedController.enabled = false;
@@ -60,13 +84,11 @@ namespace Redsilver2.Core.Interactables
                 {
                     if (isInteracting)
                     {
-
                         cameraController.enabled = false;
                         player.enabled = false;
 
                         clampedController.enabled = true;
                         clampedController.FollowPath(clampedController.transform, interactionPaths, pathFollowDuration);
-
                     }
                     else
                     {

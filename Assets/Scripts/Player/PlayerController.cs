@@ -1,5 +1,7 @@
 using Redsilver2.Core.Audio;
 using Redsilver2.Core.Events;
+using Redsilver2.Core.Quests;
+using Redsilver2.Core.SceneManagement;
 using Redsilver2.Core.Stats;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,8 +11,6 @@ namespace Redsilver2.Core.Player
     [RequireComponent(typeof(Health))]
     [RequireComponent(typeof(Stamina))]
     [RequireComponent(typeof(FootstepAudioHandler))]
-
-    [RequireComponent(typeof(PlayerWeight))]
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : GameObjectEvents
     {
@@ -37,64 +37,55 @@ namespace Redsilver2.Core.Player
 
         private Health health;
         private Stamina stamina;
-        private FootstepAudioHandler footstepAudio;
-     
-        private PlayerWeight        weight;
-        private CharacterController character;
-        private PlayerControls      controls;
+        private FootstepAudioHandler footstepAudioHandler;
 
-        private UnityEvent<PlayerController> onMovementMotionChanged = new UnityEvent<PlayerController>();
-        private UnityEvent<PlayerController> onFootstepSoundPlayed   = new UnityEvent<PlayerController>();
+        private CharacterController character;
+        private PlayerControls.MovementActions controls;
+
+        private static UnityEvent<PlayerController> onMovementMotionChanged = new UnityEvent<PlayerController>();
+        private bool lastEnabledState = false;
 
         public float DefaultWalkSpeed => defaultWalkSpeed;
         public float DefaultRunSpeed => defaultRunSpeed;
         public bool IsGrounded => isGrounded;
         public bool IsRunning => isRunning;
         public Vector2 InputMotion => inputMotion;
-        public Health Health   => health;
-        public Stamina Stamina => stamina; 
-        public PlayerWeight Weight => weight;
-        public PlayerControls Controls => controls;
-        public CharacterController Character => character;  
+        public Health Health => health;
+        public Stamina Stamina => stamina;
+
+        public FootstepAudioHandler FootstepAudioHandler => footstepAudioHandler;
+        public CharacterController Character => character;
         public static PlayerController Instance { get; private set; }
 
-        private void Awake()
+        protected override void Awake()
         {
-            if(Instance == null)
+            if (Instance == null)
             {
                 Instance = this;
-                DontDestroyOnLoad(Instance);
             }
             else
             {
                 Destroy(gameObject);
             }
-        }
-        protected override void Start()
-        {
-            base.Start();
 
-            health         = GetComponent<Health>();
-            stamina        = GetComponent<Stamina>();
+            base.Awake();
 
-            character      = GetComponent<CharacterController>();
-            weight         = GetComponent<PlayerWeight>();
-            footstepAudio  = GetComponent<FootstepAudioHandler>();
+            InputManager inputManager = GameManager.Instance.GetComponent<InputManager>();
 
-            controls = new PlayerControls();
-           
-            if (health != null)
-            {
-                health.AddOnDeathEvent(health =>
-                {
-                    enabled = false;
-                });
-            }
+            health               = GetComponent<Health>();
+            stamina              = GetComponent<Stamina>();
+
+            character            = GetComponent<CharacterController>();
+            footstepAudioHandler = GetComponent<FootstepAudioHandler>();
+
+            controls = inputManager.PlayerControls.Movement;
+            inputManager.SetPlayerControlsState(true);
+
             if (stamina != null)
             {
-                stamina.AddOnValueChangedEvent((handler, isValueIncreasing) =>
+                stamina.AddOnValueChangedEvent(value =>
                 {
-                    float percentage = handler.PercentageValue;
+                    float percentage = stamina.PercentageValue;
 
                     if (percentage <= 0f)
                     {
@@ -107,9 +98,9 @@ namespace Redsilver2.Core.Player
                 });
             }
 
-            AddOnFootstepSoundPlayedEvent(Player =>
+            footstepAudioHandler.AddOnFootstepSoundPlayedEvent(transform =>
             {
-                if (Player.isRunning)
+                if (isRunning)
                 {
                     Debug.Log("Player is running and making loud noises");
                 }
@@ -118,43 +109,37 @@ namespace Redsilver2.Core.Player
                     Debug.Log("Player is slow and making small noises");
                 }
 
-                Debug.DrawRay(Player.transform.position, Vector3.down, Color.red, 10f);
+                Debug.DrawRay(transform.position, Vector3.down, Color.red, 10f);
             });
+
             AddOnStateChangedEvent(isEnabled =>
             {
-                if(controls != null)
-                {
-                    if (isEnabled)
-                    {
-                        controls?.Enable();
-                    }
-                    else
-                    {
-                        controls?.Disable();
-                    }
-                }
+                inputManager.SetPlayerControlsState(isEnabled);
             });
 
             currentGravityForce = defaultGravityForce;
 
-            isRunning          = false;
-            isGrounded         = false;
+            isRunning = false;
+            isGrounded = false;
             canPlayLandingClip = false;
 
             controls.Enable();
+
             GameManager.SetCursorVisibility(false);
+            PauseManager.AddOnGamePausedEvent(OnGamePausedEvent);
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
 
         private void Update()
         {
-            inputMotion = controls.Movement.Move.ReadValue<Vector2>();
-            isGrounded  = GroundCheck(out currentGroundTag);
+            inputMotion = controls.Move.ReadValue<Vector2>();
+            isGrounded = GroundCheck(out currentGroundTag);
 
             if (isGrounded)
             {
                 if (inputMotion.magnitude > 0.5f && canRun)
                 {
-                    isRunning = controls.Movement.Run.IsPressed();
+                    isRunning = controls.Run.IsPressed();
                 }
                 else
                 {
@@ -165,26 +150,24 @@ namespace Redsilver2.Core.Player
             {
                 isRunning = false;
             }
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                weight.AddWeight(10f);
-            }
         }
+
         private void LateUpdate()
         {
-            float targetedGravityForce  = fallingGravityForce;
+            float targetedMovementSpeed = defaultWalkSpeed;
+            float targetedGravityForce = fallingGravityForce;
             Vector3 characterMotion;
 
-            if(isGrounded)
+            if (isGrounded)
             {
                 bool playGroundSound = false;
-                bool canPlaySound    = false;
+                bool canPlaySound = false;
 
                 targetedGravityForce = defaultGravityForce;
 
                 if (isRunning)
                 {
+                    targetedMovementSpeed = defaultRunSpeed;
                     stamina?.StopRecovery();
                     stamina?.Decrease();
                 }
@@ -199,25 +182,17 @@ namespace Redsilver2.Core.Player
                     canPlaySound = true;
                     canPlayLandingClip = false;
                 }
-               
-                if (inputMotion.magnitude > 0.5f)
+
+                if (inputMotion.magnitude > 0.5f && !canPlaySound)
                 {
-                    if(!canPlaySound)
-                    {
-                        canPlaySound = true;
-                        playGroundSound = true;
-                    }
+                    canPlaySound = true;
+                    playGroundSound = true;
                 }
 
-                if (canPlaySound) 
+                if (canPlaySound)
                 {
-                   footstepAudio.SetPitch(isRunning, 1f);
-                   footstepAudio.PlayFootstepSound(currentGroundTag, playGroundSound, out bool isSoundTriggered);
-
-                   if (isSoundTriggered)
-                   {
-                       onFootstepSoundPlayed?.Invoke(this);
-                   }
+                    footstepAudioHandler.SetPitch(isRunning, 1f);
+                    footstepAudioHandler.PlayFootstepSound(currentGroundTag, playGroundSound);
                 }
             }
             else
@@ -225,14 +200,14 @@ namespace Redsilver2.Core.Player
                 canPlayLandingClip = true;
             }
 
-            currentMovementSpeed = Mathf.Lerp(currentMovementSpeed, weight.GetDesiredMovementSpeed(this), Time.deltaTime);
+            currentMovementSpeed = Mathf.Lerp(currentMovementSpeed, targetedMovementSpeed, Time.deltaTime);
 
-            currentGravityForce  = Mathf.Lerp(currentGravityForce, targetedGravityForce, Time.deltaTime);
-            currentGravityForce  = Mathf.Clamp(currentGravityForce, defaultGravityForce, fallingGravityForce);
+            currentGravityForce = Mathf.Lerp(currentGravityForce, targetedGravityForce, Time.deltaTime);
+            currentGravityForce = Mathf.Clamp(currentGravityForce, defaultGravityForce, fallingGravityForce);
 
-            characterMotion = ( transform.forward * inputMotion.y * currentMovementSpeed 
-                              + transform.right   * inputMotion.x * currentMovementSpeed 
-                              + transform.up      * -currentGravityForce) * Time.deltaTime;
+            characterMotion = (transform.forward * inputMotion.y         * currentMovementSpeed
+                              + transform.right  * inputMotion.x         * currentMovementSpeed
+                              + transform.up     * -currentGravityForce) * Time.deltaTime;
 
             character.Move(characterMotion);
             onMovementMotionChanged?.Invoke(this);
@@ -240,9 +215,8 @@ namespace Redsilver2.Core.Player
         private bool GroundCheck(out string groundTag)
         {
             Ray ray = new Ray(transform.position, -transform.up);
-            int targetMask = LayerMask.GetMask("Ground");
 
-            if (Physics.Raycast(ray, out RaycastHit hitInfo, maxGroundCheckRayLenght, targetMask) && hitInfo.collider.gameObject != null)
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, maxGroundCheckRayLenght, LayerMask.GetMask("Ground")) && hitInfo.collider.gameObject != null)
             {
                 groundTag = hitInfo.collider.gameObject.tag;
                 return true;
@@ -252,32 +226,36 @@ namespace Redsilver2.Core.Player
             return false;
         }
 
-        public void AddOnMovementMotionChangedEvent(UnityAction<PlayerController> action)
+        public static void AddOnMovementMotionChangedEvent(UnityAction<PlayerController> action)
         {
             onMovementMotionChanged?.AddListener(action);
         }
-        public void RemoveOnMovementMotionChangedEvent(UnityAction<PlayerController> action)
+        public static void RemoveOnMovementMotionChangedEvent(UnityAction<PlayerController> action)
         {
             onMovementMotionChanged?.RemoveListener(action);
         }
 
-        public void AddOnFootstepSoundPlayedEvent(UnityAction<PlayerController> action)
+        private void OnLoadSingleSceneEvent(int levelIndex)
         {
-            onFootstepSoundPlayed?.AddListener(action);
-        }
-        public void RemoveOnFootstepSoundPlayedEvent(UnityAction<PlayerController> action)
-        {
-            onFootstepSoundPlayed?.RemoveListener(action);
+            enabled = false;
+            PauseManager.RemoveOnGamePausedEvent(OnGamePausedEvent);
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
 
-
-        private void OnEnable()
+        private void OnGamePausedEvent(bool isPaused)
         {
-            InvokeStateChangedEvent(true);
-        }
-        private void OnDisable()
-        {
-            InvokeStateChangedEvent(false);
+            if (!isPaused)
+            {
+                if (lastEnabledState)
+                {
+                    enabled = true;
+                }
+            }
+            else
+            {
+                lastEnabledState = enabled;
+                enabled = false;
+            }
         }
     }
 }

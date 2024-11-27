@@ -4,14 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Redsilver2.Core.Interactables;
 
 namespace Redsilver2.Core.Generator
 {
     [RequireComponent(typeof(Health))]
-    public class Generator : MonoBehaviour
+    public class Generator : Lookable
     {
         [SerializeField] private Transform handle;
-        [SerializeField] private float maxHandleRotationClamp = 49f;
 
         [Space]
         [SerializeField] private MeshRenderer powerOnRenderer;
@@ -38,8 +38,7 @@ namespace Redsilver2.Core.Generator
         [SerializeField] private AudioClip powerOn;
 
         [Space]
-        [SerializeField] Health durability;
-        [SerializeField] private float baseDurabilityDPS = 0.05f;
+        [SerializeField] private float damagePerSeconds = 0.05f;
 
         [Space(4f)]
         [SerializeField] private Image fillBar;
@@ -52,19 +51,29 @@ namespace Redsilver2.Core.Generator
         [SerializeField] private float minDelayLightsFlickers;
         [SerializeField] private float maxDelayLightsFlickers;
 
+
+        public Health Durability => durability;
+        private float maxHandleRotationClamp = 49f;
+
         private Color targetedFillBarColor; 
         private GeneratorCondition condition = GeneratorCondition.Danger;
        
         private IEnumerator conditionCoroutine;
         private IEnumerator damageCoroutine;
 
-        private bool  isActivated     = true;
+
+        private Health    durability;
+        private Transform playerTransform;
+        private bool      isActivated     = true;
+
+        private float handleLocalRotationW;
+        private Collider collider;
 
 
         private List<GeneratorLight> generatorLights = new List<GeneratorLight>();
-        public static Generator Instance;
+        public static Generator Instance { get; private set; }
 
-        private void Awake()
+        protected override void Awake()
         {
             if(Instance == null)
             {
@@ -74,40 +83,63 @@ namespace Redsilver2.Core.Generator
             {
                 Destroy(gameObject);
             }
+
+            base.Awake();
+          
+            collider   = GetComponent<Collider>();
+            durability = GetComponent<Health>();
+
+            playerTransform        = PlayerController.Instance.transform;
+            maxHandleRotationClamp = 0.293232471f;
+            handleLocalRotationW   = handle.localRotation.w;
+
+            AddOnInteractEvent(isInteracting =>
+            {
+                collider.enabled = !isInteracting;
+            });
         }
+
+        public void Activate()
+        {
+            PlaySound(powerOn);
+            SetPowerMaterial(true);
+            StartTakingDamage();
+        }
+
+        public void Desactivate()
+        {
+            PlaySound(powerOff);
+            SetPowerMaterial(false);
+            StopTakingDamage();
+        }
+
+
 
         private void Start()
         {
-
-            durability = GetComponent<Health>();
-
-
-            StartTakeDamage();
-            SetPowerMaterial(true);
-            PlaySound(powerOn);
             SetGeneratorCondition(GeneratorCondition.Healthy);
 
             if (durability != null)
             {
-                durability.AddOnValueChangedEvent((handler, isIncreasingValue) =>
+                durability.AddOnValueChangedEvent(value =>
                 {
                     if (isActivated)
                     {
-                        float value = handler.PercentageValue;
+                        float percentage = durability.PercentageValue;
 
-                        if (value <= 1f && value > 0.8f)
+                        if (percentage <= 1f && percentage > 0.8f)
                         {
                             SetGeneratorCondition(GeneratorCondition.Healthy);
                         }
-                        else if (value <= 0.8f && value > 0.4f)
+                        else if (percentage <= 0.8f && percentage > 0.4f)
                         {
                             SetGeneratorCondition(GeneratorCondition.Caution);
                         }
-                        else if (value <= 0.4f && value > 0f)
+                        else if (percentage <= 0.4f && percentage > 0f)
                         {
                             SetGeneratorCondition(GeneratorCondition.Danger);
                         }
-                        else if (value <= 0f)
+                        else if (percentage <= 0f)
                         {
                             PlaySound(powerOff);
                             SetPowerMaterial(false);
@@ -122,25 +154,26 @@ namespace Redsilver2.Core.Generator
 
                 if(handle != null)
                 {
-                    durability.AddOnValueChangedEvent((handler, isIncreasingValue) =>
+                    durability.AddOnValueChangedEvent(value =>
                     {
                         float rotationY;
-                        float value = handler.PercentageValue;
+                        float percentage = durability.PercentageValue;
 
-                        if (value >= 1f)
+                        if (percentage >= 1f)
                         {
                             rotationY = maxHandleRotationClamp;
                         }
-                        else if (value <= 0f)
+                        else if (percentage <= 0f)
                         {
                             rotationY = -maxHandleRotationClamp;
                         }
                         else
                         {
-                            rotationY = Mathf.Lerp(-maxHandleRotationClamp, maxHandleRotationClamp, value);
+                            rotationY = Mathf.Lerp(-maxHandleRotationClamp, maxHandleRotationClamp, percentage);
                         }
 
-                        handle.localEulerAngles = Vector3.right * -90 +  Vector3.forward * rotationY;
+                        // Quaternion(-0.64343977,-0.293232471,-0.293232471,0.64343977)
+                        handle.localRotation = new Quaternion(-0.64343977f, rotationY, 0f, handleLocalRotationW);
                     });
                 }
             }
@@ -180,7 +213,6 @@ namespace Redsilver2.Core.Generator
                 }
             }
         }
-
         private void PlaySound(AudioClip clip)
         {
             if (generatorSource != null)
@@ -189,6 +221,7 @@ namespace Redsilver2.Core.Generator
                 generatorSource.Play();
             }
         }
+
         private void SetGeneratorCondition(GeneratorCondition condition)
         {
             if(this.condition != condition)
@@ -224,7 +257,6 @@ namespace Redsilver2.Core.Generator
 
             }
         }
-
         private void UpdateFillBar(Color targetedFillBarColor)
         {
             PlayerController player = PlayerController.Instance;
@@ -251,10 +283,9 @@ namespace Redsilver2.Core.Generator
                 fillBar.color = Color.Lerp(fillBar.color, newColor, Time.deltaTime);
             }
         }
+
         private void FlickerLightsByDistanceToPlayer(float maxDistance)
         {
-            Transform playerTransform = PlayerController.Instance.transform;
-
             foreach(GeneratorLight generatorLight in generatorLights)
             {
                 Transform transform = generatorLight.transform;
@@ -269,11 +300,8 @@ namespace Redsilver2.Core.Generator
                 }
             }
         }
-    
         private void FlickerLightByDistanceToPlayer(float maxDistance)
         {
-            Transform playerTransform = PlayerController.Instance.transform;
-
             for(int i = 0; i < 9999; i++)
             {
                 GeneratorLight generatorLight = generatorLights[Random.Range(0, generatorLights.Count)];
@@ -306,7 +334,10 @@ namespace Redsilver2.Core.Generator
 
             while (this.condition == GeneratorCondition.Caution)
             {
-                lightsFlickerTime += Time.deltaTime;
+                if (!PauseManager.IsGamePaused)
+                {
+                    lightsFlickerTime += Time.deltaTime;
+                }
 
                 if(lightsFlickerTime > lightsFlickerWaitTime)
                 {
@@ -317,19 +348,20 @@ namespace Redsilver2.Core.Generator
                     lightsFlickerWaitTime = Random.Range(minDelayLightsFlickers, maxDelayLightsFlickers);
                 }
 
+
                 yield return null;
             }
         }
 
 
-        private void StartTakeDamage()
+        private void StartTakingDamage()
         {
-            StopTakeDamage();
+            StopTakingDamage();
             damageCoroutine = DamageCoroutine();
             StartCoroutine(damageCoroutine);
         }
 
-        private void StopTakeDamage()
+        private void StopTakingDamage()
         {
             if (damageCoroutine != null)
             {
@@ -341,7 +373,11 @@ namespace Redsilver2.Core.Generator
         {
             while (isActivated)
             {
-                durability.Damage(baseDurabilityDPS * Time.deltaTime);
+                if (!PauseManager.IsGamePaused)
+                {
+                    durability.Damage(damagePerSeconds * Time.deltaTime);
+                }
+
                 yield return null;
             }
         }

@@ -10,13 +10,12 @@ namespace Redsilver2.Core.Player
         private Transform defaultParent;
         private Quaternion lastLocalRotation;
 
-        protected override void Start()
+        protected override void Awake()
         {
             Transform transform = this.transform.parent;
             PlayerController player = PlayerController.Instance;
 
-            enableControlsOnStart = true;
-            base.Start();
+            base.Awake();
 
             if(player !=  null)
             {
@@ -27,10 +26,12 @@ namespace Redsilver2.Core.Player
                     if(isEnabled)
                     {
                         GameManager.SetCursorVisibility(false);
+                        controls.Enable();
                     }
                     else
                     {
                         lastLocalRotation = transform.localRotation;
+                        controls.Disable();
                     }
 
                     enabled = isEnabled;
@@ -38,7 +39,9 @@ namespace Redsilver2.Core.Player
             }
 
             defaultParent = transform;
-            GetComponent<Camera>().nearClipPlane = 0.01f;
+            Camera.main.nearClipPlane = 0.01f;
+
+            controls.Enable();
         }
 
         protected override void RotateBody()
@@ -59,7 +62,7 @@ namespace Redsilver2.Core.Player
             }
 
             Array.Reverse(newPaths, 0, paths.Length);
-            newPaths[paths.Length - 1] = new CameraPath(Vector3.zero, lastLocalRotation);
+            newPaths[paths.Length - 1] = new CameraPath(Vector3.zero, Quaternion.identity);
 
             Debug.Log(newPaths);
 

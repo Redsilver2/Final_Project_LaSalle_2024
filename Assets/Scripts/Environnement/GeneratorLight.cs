@@ -1,9 +1,10 @@
+using Redsilver2.Core.Counters;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Redsilver2.Core.Generator
 {
+    [RequireComponent(typeof(AudioSource))]
     public class GeneratorLight : MonoBehaviour
     {
         [SerializeField] private Light _light;
@@ -35,8 +36,8 @@ namespace Redsilver2.Core.Generator
         public void Flicker(float[] intervals, bool finalVisibility)
         {
             StopIterators();
+            
             iterators[1] = FlickerCoroutine(intervals, finalVisibility);
-
             isFlickering = true;
 
             foreach (IEnumerator iterator in iterators)
@@ -102,7 +103,11 @@ namespace Redsilver2.Core.Generator
         {
             while (isFlickering)
             {
-                flickeringTimeElapsed += Time.deltaTime;
+                if (!PauseManager.IsGamePaused)
+                {
+                    flickeringTimeElapsed += Time.deltaTime;
+                }
+
                 yield return null;
             }
         }
@@ -125,15 +130,15 @@ namespace Redsilver2.Core.Generator
                     }
                     else
                     {
-                        yield return new WaitForSeconds(intervals[i]);
+                        yield return Counter.WaitForSeconds(intervals[i]);
                     }
                 }
 
                 if (_light.enabled != finalVisibility && isDoneLooping)
                 {
-                    yield return new WaitForSeconds(intervals[intervals.Length - 1]);
+                    yield return Counter.WaitForSeconds(intervals[intervals.Length - 1]);
                     _light.enabled = finalVisibility;
-                    StopAllCoroutines();
+                    StopIterators();
                 }
             }
         }

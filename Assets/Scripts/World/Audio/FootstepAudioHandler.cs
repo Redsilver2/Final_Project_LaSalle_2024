@@ -1,8 +1,8 @@
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Redsilver2.Core.Audio {
+namespace Redsilver2.Core.Audio 
+{
     public class FootstepAudioHandler : MonoBehaviour
     {
         [SerializeField] private AudioSource source;
@@ -11,6 +11,8 @@ namespace Redsilver2.Core.Audio {
         [Space]
         [SerializeField] private float walkPitch = 1.0f;
         [SerializeField] private float runPitch = 1.0f;
+
+        private  UnityEvent<Transform> onFootstepSoundPlayed = new UnityEvent<Transform>();
 
         private void OnValidate()
         {
@@ -28,10 +30,8 @@ namespace Redsilver2.Core.Audio {
             source.pitch = Mathf.Lerp(source.pitch, desiredPitch, lerpSpeed * Time.deltaTime);
         }
 
-        public void PlayFootstepSound(string groundTag, bool playGroundClip, out bool isSoundTriggered)
+        public void PlayFootstepSound(string groundTag, bool playGroundClip)
         {
-            isSoundTriggered = false;
-
             if (source != null && footsteps != null)
             {
                 if (!playGroundClip)
@@ -42,19 +42,19 @@ namespace Redsilver2.Core.Audio {
 
                 if (!source.isPlaying)
                 {
-                    AudioClip clip = GetMovementClip(groundTag, playGroundClip);
+                    AudioClip clip = GetFootstepClip(groundTag, playGroundClip);
 
                     if (clip != null)
                     {
                         source.clip = clip;
                         source.Play();
-                        isSoundTriggered = true;
+                        onFootstepSoundPlayed.Invoke(transform);
                     }
                 }
             }
         }
 
-        private AudioClip GetMovementClip(string groundTag, bool isGettingGroundClip)
+        private AudioClip GetFootstepClip(string groundTag, bool isGettingGroundClip)
         {
             AudioClip result = null;
 
@@ -70,6 +70,16 @@ namespace Redsilver2.Core.Audio {
             }
 
             return result;
+        }
+
+        public void AddOnFootstepSoundPlayedEvent(UnityAction<Transform> action)
+        {
+            onFootstepSoundPlayed?.AddListener(action);
+        }
+
+        public void RemoveOnFootstepSoundPlayedEvent(UnityAction<Transform> action)
+        {
+            onFootstepSoundPlayed?.RemoveListener(action);
         }
     }
 }

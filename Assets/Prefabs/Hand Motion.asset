@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 890773a73bfe331499a92d042e7b6bcf, type: 3}
+  m_Name: Hand Motion
+  m_EditorClassIdentifier: 
+  defaultPosition: {x: -0.305, y: -0.385, z: 0.404}
+  defaultRotation: {x: 0, y: 0, z: 0}
+  minPositionLerpSpeed: 4
+  maxPositionLerpSpeed: 6
+  defaultRotationLerpSpeed: 2
+  minPositionX: -0.505
+  maxPositionX: -0.105
+  minPositionY: -0.385
+  maxPositionY: -0.285
+  minRotationX: -2
+  maxRotationX: 2
+  minRotationY: -5
+  maxRotationY: 5

@@ -1,3 +1,4 @@
+using Redsilver2.Core.SceneManagement;
 using UnityEngine;
 
 namespace Redsilver2.Core.Controls
@@ -8,14 +9,38 @@ namespace Redsilver2.Core.Controls
         [SerializeField] private float defaultMinClampedRotationY = -90f;
         [SerializeField] private float defaultMaxClampedRotationY = 90f;
 
+        [Space]
+        [SerializeField] private bool  enableControlsOnStart = false;
+
         private float minClampedRotationY;
         private float maxClampedRotationY;
 
         private float rotationTrackerY = 0f;
+        private Vector2 defaultRotation;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
+           
+            defaultRotation = playerBody.localEulerAngles;
+            rotationTrackerY = defaultRotation.y;
+
+            AddOnPathFollowStartedEvent(() =>
+            {
+                rotationTrackerY =  defaultRotation.y;
+                rotationTrackerX =  defaultRotation.x;
+            });
+
+            if (!enableControlsOnStart)
+            {
+                enabled = false;
+            }
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            Debug.LogWarning("???");
         }
 
         protected override void RotateBody()
@@ -36,9 +61,9 @@ namespace Redsilver2.Core.Controls
             base.ResetClampedRotationValue();
         }
 
-        public void SetRotationTrackerY()
+        protected override void OnDisable()
         {
-            rotationTrackerY = playerBody.localEulerAngles.y;
+            base.OnDisable();
         }
     }
 }

@@ -12,15 +12,14 @@ namespace Redsilver2.Core.Events
         private UnityEvent<int> onPathIndexChanged;
         private UnityEvent<CameraController> onCameraMotionChanged;
 
-        protected override void Start()
+        protected override void Awake()
         {
             onPathFollowStarted = new UnityEvent();
             onPathFollowCompleted = new UnityEvent();
 
             onPathIndexChanged = new UnityEvent<int>();
             onCameraMotionChanged = new UnityEvent<CameraController>();
-
-            base.Start();
+            base.Awake();
         }
 
         public void AddOnPathFollowStartedEvent(UnityAction action)

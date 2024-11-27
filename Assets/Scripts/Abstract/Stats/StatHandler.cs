@@ -9,15 +9,16 @@ namespace Redsilver2.Core.Stats
         [SerializeField] protected float maxValue;
         protected float currentValue;
 
-        private UnityEvent<StatHandler, bool> onValueChanged = new UnityEvent<StatHandler, bool>();
+        private UnityEvent<float> onValueChanged;
 
         public float CurrentValue => currentValue;
         public float MaxValue => maxValue;
         public float PercentageValue => currentValue / maxValue;
 
-        protected virtual void Start()
+        protected virtual void Awake()
         {
             currentValue = maxValue;
+            onValueChanged = new UnityEvent<float>();
         }
 
         protected void Decrease(float amount)
@@ -29,7 +30,7 @@ namespace Redsilver2.Core.Stats
                 currentValue = 0;
             }
 
-            onValueChanged?.Invoke(this, false);
+            onValueChanged?.Invoke(amount);
         }
         protected void Increase(float amount)
         {
@@ -40,14 +41,14 @@ namespace Redsilver2.Core.Stats
                 currentValue = maxValue;
             }
 
-            onValueChanged?.Invoke(this, true);
+            onValueChanged?.Invoke(amount);
         }
 
-        public void AddOnValueChangedEvent(UnityAction<StatHandler, bool> action)
+        public void AddOnValueChangedEvent(UnityAction<float> action)
         {
             onValueChanged?.AddListener(action);
         }
-        public void RemoveOnValueChangedEvent(UnityAction<StatHandler, bool> action)
+        public void RemoveOnValueChangedEvent(UnityAction<float> action)
         {
             onValueChanged?.AddListener(action);
         }

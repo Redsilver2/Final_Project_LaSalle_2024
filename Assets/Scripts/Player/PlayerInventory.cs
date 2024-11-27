@@ -1,53 +1,57 @@
+using Redsilver2.Core.Counters;
 using Redsilver2.Core.Events;
-using Redsilver2.Core.Interactables;
 using Redsilver2.Core.Items;
 using Redsilver2.Core.Motion;
+using Redsilver2.Core.SceneManagement;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using IEnumerator = System.Collections.IEnumerator;
+using UnityEngine.InputSystem;
 
 namespace Redsilver2.Core.Player
 {
+    [RequireComponent(typeof(InteractionManager))]
     public class PlayerInventory : PlayerInventoryEvents
     {
-        [SerializeField] private PlayerHandMotionHandler flashlightMotionHandler;
+        [SerializeField] private PlayerHandMotionHandler lightSourceMotionHandler;
         [SerializeField] private PlayerHandMotionHandler itemMotionHandler;
 
         [Space]
-        [SerializeField] private Animator flashlightAnimator;
-        [SerializeField] private Animator itemAnimator;
-
-        [Space]
-        [SerializeField] private AudioSource equipItemSource;
-        [SerializeField] private AudioSource switchItemSource;
+        [SerializeField] private AudioSource lightAudioSource;
+        [SerializeField] private AudioSource itemAudioSource;
 
         [Space]
         [SerializeField] private EquippableItem[] starterItems;
         [SerializeField] private int starterItemIndex = 0;
 
         [Space]
-        [SerializeField] private float interactionRayLenght = 5f;
-
-        [Space]
         [SerializeField] private int maxCarryCapacity = 5;
 
-        private Flashlight     equippedFlashlight = null;
-        private EquippableItem equippedItem       = null;
-
-        private List<EquippableItem> items;
-        private PlayerWeight currentWeight;
+        private int  currentEquippedItemIndex = -1;
+        private bool canSwitchItem = true;
 
         private PlayerControls.InventoryActions controls;
 
-        protected override void Start()
+        private LightSourceItem equippedLightSource = null;
+        private EquippableItem  equippedItem            = null;
+
+        private List<EquippableItem> items;
+        public AudioSource LightAudioSource => lightAudioSource;
+        public AudioSource ItemAudioSource => itemAudioSource;
+
+        public PlayerHandMotionHandler LightSourceItemMotionHandler => lightSourceMotionHandler;
+        public PlayerHandMotionHandler ItemMotionHandler => itemMotionHandler;
+
+        public LightSourceItem EquippedLightSource => equippedLightSource;
+        public EquippableItem EquippedItem => equippedItem;
+
+        protected override void Awake()
         {
+            base.Awake();
+
             PlayerController player = PlayerController.Instance;
-            base.Start();
-
-            currentWeight   = player.Weight;
-            controls        = player.Controls.Inventory;
-
-            items           = new List<EquippableItem>();
+            controls      = GameManager.Instance.GetComponent<InputManager>().PlayerControls.Inventory;;
+            items         = new List<EquippableItem>();
 
             player.AddOnStateChangedEvent(isEnabled =>
             {
@@ -55,143 +59,202 @@ namespace Redsilver2.Core.Player
 
                 if(!isEnabled)
                 {
-                    equippedFlashlight?.UnEquipped();
-                    equippedItem?.UnEquipped();
+                    equippedLightSource?.UnEquip();
+                    equippedItem?.UnEquip();
                 }
                 else
                 {
-                    equippedFlashlight?.Equip();
-                    equippedItem?.Equip();
-                }
-            });
-
-            AddOnItemAddedEvent(item =>
-            {
-                Transform transform = item.transform;
-                PlayerHandMotionSetting motionSetting = item.MotionSetting;
-                RuntimeAnimatorController animatorController = item.AnimatorController;
-
-                item.SetVisibility(false);
-
-                if (currentWeight != null)
-                {
-                    currentWeight.AddWeight(item.GetWeight());
-                }
-                
-                if(item.TryGetComponent(out Flashlight flashlight))
-                {
-                    if(equippedFlashlight != null)
+                    if(equippedLightSource != null)
                     {
-                        equippedFlashlight.Drop();
+                        equippedLightSource.gameObject.SetActive(true);
+                        equippedLightSource.Equip();
                     }
 
-                    transform?.SetParent(flashlightMotionHandler.transform);
-
-                    transform.localPosition = Vector3.down * item.MaxHidePositionY;
-                    item.SetRotationInHand();
-
-                    equippedFlashlight = flashlight;
-                    item?.SetVisibility(true);
-
-                    item.SetAnimator(flashlightAnimator);
-                    flashlightAnimator.runtimeAnimatorController = animatorController;
-
-                    flashlightMotionHandler.SethandMotionSetting(motionSetting);
-                    equippedFlashlight.Equip();
-                }
-                else
-                {
-                    transform?.SetParent(itemMotionHandler.transform);
-                    itemMotionHandler.SethandMotionSetting(motionSetting);
-
-                    if (equippedItem == null)
+                    if (equippedItem != null)
                     {
-
-                    }   
-                }        
-            });
-
-            AddOnItemRemovedEvent(item =>
-            {
-                currentWeight?.RemoveWeight(-item.GetWeight());
-            });
-        }
-
-        private void Update()
-        {
-            InteractionRay();
-        }
-
-        private void InteractionRay()
-        {
-            Ray ray = new Ray(transform.position, transform.forward);
-
-            if(Physics.Raycast(ray, out RaycastHit hitInfo, interactionRayLenght, LayerMask.GetMask("Interactable")) && hitInfo.collider != null) 
-            {
-                Collider collider = hitInfo.collider;
-
-                if (collider.TryGetComponent(out IDescribable describable))
-                {
-                    Debug.Log(describable.GetName());
-                }
-
-                if (controls.Interact.WasPressedThisFrame())
-                {
-                    if (collider.TryGetComponent(out Interactable interactable))
-                    {
-                        interactable?.Interact();
+                        equippedItem.gameObject.SetActive(true);
+                        equippedItem.Equip();
                     }
                 }
-            }
+            });
+
+            AddOnItemRemovedEvent((item, inventory, canDrop) =>
+            {
+                if (items.Contains(item))
+                {
+                    items.Remove(item);
+                }
+
+                if(item == equippedItem)
+                {
+                    equippedItem = null;
+                }
+            });
+
+            controls.Slot01.performed += OnSlot01InputPerformed;
+            controls.Slot02.performed += OnSlot02InputPerformed;
+            controls.Slot03.performed += OnSlot03InputPerformed;
+            controls.Slot04.performed += OnSlot04InputPerformed;
+            controls.Drop.performed   += OnDropItemInputPerformed;
+
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
+            StartCoroutine(SetStarterItems());
         }
 
-        public void AddItem(EquippableItem item, out bool isAdded)
+        public void AddItem(EquippableItem item)
         {
-            isAdded = false;
+            InvokeOnItemAddedEvent(this, item);
+        }
 
-            if (!items.Contains(item) && item != null && currentWeight != null)
+        public void RemoveItem(EquippableItem item, bool canDrop)
+        {
+            InvokeOnRemoveItemEvent(this, item, canDrop);
+        }
+
+        public bool Contains(EquippableItem item)
+        {
+            return items.Contains(item);
+        }
+
+        public void AddEquippableItemToItemsList(EquippableItem item)
+        {
+            items?.Add(item);
+        }
+
+        public EquippableItem[] GetEquippableItems()
+        {
+            if (items.Count > 0)
             {
-                Debug.Log("Phase 1");
+                return items.ToArray();
+            }
 
-                if (!currentWeight.IsExeceedingMaxWeight(item.GetWeight()) && items.Count < maxCarryCapacity)
+            return new EquippableItem [0];
+        }
+        public bool IsFull() => items.Count == maxCarryCapacity;
+
+        public void SetEquippedLightSource(LightSourceItem equippedLightSource)
+        {
+            this.equippedLightSource = equippedLightSource;
+        }
+
+        public void SetEquippedItem(EquippableItem equippedItem)
+        {
+            this.equippedItem = equippedItem;
+        }
+
+        public int GetItemIndex(Item item)
+        {
+            for (int i = 0; i < items.Count; i++)
+            {
+                if(items[i] == item)
                 {
-                    Debug.Log("Phase 2");
-
-
-                    items?.Add(item);
-                    InvokeOnItemAddedEvent(item);
-                    isAdded = true;
+                    return i;
                 }
             }
+
+            return -1;
         }
 
-        public void RemoveItem(EquippableItem item)
+        public void ChangeEquippedItem(uint index)
         {
-            if (items.Contains(item) && item != null)
+            if (index < items.Count && index != currentEquippedItemIndex && canSwitchItem)
             {
-                items.Remove(item); 
-                InvokeOnRemoveItemEvent(item);
+                currentEquippedItemIndex = (int)index;
+                StartCoroutine(ChangeItemCoroutine(currentEquippedItemIndex));
+            }
+        }
+        private IEnumerator ChangeItemCoroutine(int index)
+        {
+            float waitTime;
+            EquippableItem nextEquippedItem = items[index];
+            canSwitchItem = false; 
+
+            if (equippedItem != null) 
+            {
+                canSwitchItem = false;
+                waitTime      = equippedItem.GetAnimationLenght("Hide");
+                equippedItem.UnEquip();
+
+                yield return Counter.WaitForSeconds(waitTime);
+              
+                equippedItem.gameObject.SetActive(false);
+                equippedItem = null;
+            }
+
+            if (nextEquippedItem != null)
+            {
+                equippedItem = nextEquippedItem;
+                equippedItem.gameObject.SetActive(true);
+
+                waitTime = equippedItem.GetAnimationLenght("Show");
+                equippedItem.Equip();
+                yield return Counter.WaitForSeconds(waitTime);
+            }
+
+            canSwitchItem = true;
+        }
+
+        private IEnumerator SetStarterItems()
+        {
+            foreach (EquippableItem item in starterItems)
+            {
+                while (!item.didAwake) { yield return null; }
+                item.Interact();
             }
         }
 
-        private void SetItemParent()
+        private void OnDropItemInputPerformed(InputAction.CallbackContext context)
         {
-
+            if (context.performed && equippedItem != null)
+            {
+                RemoveItem(equippedItem, true);
+                equippedItem = null;
+            }
         }
 
-        private void EquipItem(int index)
+        private void OnSlot01InputPerformed(InputAction.CallbackContext context)
         {
-
+            if (context.performed)
+            {
+                ChangeEquippedItem(0);
+            }
+        }
+        private void OnSlot02InputPerformed(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                ChangeEquippedItem(1);
+            }
         }
 
-        private void OnDisable()
+        private void OnSlot03InputPerformed(InputAction.CallbackContext context)
         {
-           InvokeStateChangedEvent(false);
+            if (context.performed)
+            {
+                ChangeEquippedItem(2);
+            }
+        }
+        private void OnSlot04InputPerformed(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                ChangeEquippedItem(3);
+            }
         }
 
-        private void OnEnable()
+        private void OnLoadSingleSceneEvent(int levelIndex)
         {
-           InvokeStateChangedEvent(true);
+            controls.Slot01.performed -= OnSlot01InputPerformed;
+            controls.Slot02.performed -= OnSlot02InputPerformed;
+            controls.Slot03.performed -= OnSlot03InputPerformed;
+            controls.Slot04.performed -= OnSlot04InputPerformed;
+            controls.Drop.performed   -= OnDropItemInputPerformed;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
     }
 

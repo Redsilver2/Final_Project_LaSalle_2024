@@ -8,17 +8,9 @@ namespace Redsilver2.Core.Stats
         [Space]
         [SerializeField][Range(0.1f, 1f)] private float maxRecoveryThreshold;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
-            AddOnValueChangedEvent((handler, isIncreasingValue) =>
-            {
-                if (!isIncreasingValue)
-                {
-                    StopRecovery();
-                    StartRecovery();
-                }
-            });
+            base.Awake();
         }
 
         protected override IEnumerator RecoveryCoroutine()

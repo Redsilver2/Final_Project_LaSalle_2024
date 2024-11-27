@@ -12,21 +12,16 @@ namespace Redsilver2.Core.Motion
 
         protected virtual void Start()
         {
-            PlayerController player = PlayerController.Instance;
-
             if (motionSetting != null)
             {
                 currentPositionLerpSpeed = motionSetting.MinPositionLerpSpeed;
             }
 
-            if (player != null)
-            {
-                player.AddOnMovementMotionChangedEvent(MovementMotionEvent);
-            }
+            PlayerController.AddOnMovementMotionChangedEvent(MovementMotionEvent);
 
-            if(Camera.main.TryGetComponent(out PlayerCameraController cameraController))
+
+            if (Camera.main.TryGetComponent(out PlayerCameraController cameraController))
             {
-                Debug.Log(cameraController);
                 cameraController.AddOnCameraMotionChangedEvent(CameraMotionEvent);
             }
         }

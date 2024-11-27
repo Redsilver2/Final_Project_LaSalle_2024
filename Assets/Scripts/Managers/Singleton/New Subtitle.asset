@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb72de7a992e61d4f84ad170a3d5c1e7, type: 3}
+  m_Name: New Subtitle
+  m_EditorClassIdentifier: 
+  audioClip: {fileID: 0}
+  subtitleDatas:
+  - characterName: John
+    context: We have a job to do... Save all the Man and Woman of this nation. This
+      won't affect me in anyways, but you have to be a hero for once Martin.
+    startTime: 0
+    endTime: 6
+  - characterName: Martin
+    context: I know but.. what abou-
+    startTime: 8
+    endTime: 9
+  - characterName: John
+    context: There is nothing about this that will make me happier....
+    startTime: 9
+    endTime: 12
+  - characterName: Martin
+    context: I'm so sorry john... you don't deserve to hold the wait of all this
+      pain and suffering!
+    startTime: 16
+    endTime: 19

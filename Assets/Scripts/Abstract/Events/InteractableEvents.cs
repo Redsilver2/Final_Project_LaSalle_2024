@@ -8,12 +8,12 @@ namespace Redsilver2.Core.Events
         private UnityEvent<bool> onInteractOnce;
         private UnityEvent<bool> onInteract;
 
-        protected override void Start()
+        protected override void Awake()
         {
             onInteractOnce = new UnityEvent<bool>();
             onInteract = new UnityEvent<bool>();
 
-            base.Start();
+            base.Awake();
         }
 
 

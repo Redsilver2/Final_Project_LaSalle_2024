@@ -1,67 +1,54 @@
-using Redsilver2.Core.Economy;
 using Redsilver2.Core.Interactables;
-using Redsilver2.Core.Motion;
 using Redsilver2.Core.Player;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Redsilver2.Core.Items
 {
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
+    [RequireComponent(typeof(Animator))]
     public abstract class Item : Interactable, IWeighable
     {
-        [SerializeField] protected Vector3 positionInHand;
-        [SerializeField] private   Vector3 rotationInHand;
-
         [Space]
         [SerializeField] protected float weight;
 
         [Space]
-        [SerializeField] protected RuntimeAnimatorController animatorController;
-
-        [Space]
-        [SerializeField] private PlayerHandMotionSetting motionSetting;
+        [SerializeField] private Sprite pickupSpriteIcon;
 
         [Space]
         [SerializeField] private AudioClip pickupClip;
-        [SerializeField] private AudioClip equipClip;
-        [SerializeField] private AudioClip unequipClip;
-        [SerializeField] private AudioClip landClip;
 
-        private MeshFilter   meshFilter;
-        private MeshRenderer renderer;
-        private Collider     collider;
+        private   MeshFilter   meshFilter;
+        private   MeshRenderer renderer;
+        protected Collider     collider;
 
         protected PlayerInventory inventory;
+        protected AudioSource  source;
 
-        private Animator     animator;
-        private AudioSource  source;
+        private static UnityEvent<Item> onItemInteractOnce = new UnityEvent<Item>();
+        private static UnityEvent<Item> onItemInteract     = new UnityEvent<Item>();
 
         public MeshFilter MeshFilter => meshFilter;
-        public PlayerHandMotionSetting MotionSetting => motionSetting;
-        public RuntimeAnimatorController AnimatorController => animatorController;
 
-
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
 
+            inventory  = Camera.main.GetComponent<PlayerInventory>();
             meshFilter = GetComponent<MeshFilter>();
             renderer   = GetComponent<MeshRenderer>();
             collider   = GetComponent<Collider>();
 
-            if(Camera.main.TryGetComponent(out PlayerInventory inventory))
+            AddOnInteractOnceEvent(isInteracting =>
             {
-                this.inventory = inventory;
-            }
+                onItemInteractOnce.Invoke(this);
+            });
 
-           // AddOnInteract();
-           // AddOnInteractOnce();
-        }
-
-        public void SetRotationInHand()
-        {
-            transform.localEulerAngles = rotationInHand;
+            AddOnInteractEvent(isInteracting =>
+            {
+                onItemInteract.Invoke(this);
+            });
         }
 
         protected void SetMeshRendererState(bool isEnabled)
@@ -71,6 +58,7 @@ namespace Redsilver2.Core.Items
                 renderer.enabled = isEnabled;
             }
         }
+
         protected void SetColliderState(bool isEnabled)
         {
             if (collider != null)
@@ -78,41 +66,42 @@ namespace Redsilver2.Core.Items
                 collider.enabled = isEnabled;
             }
         }
-
         public void SetVisibility(bool isVisible)
         {
+            Debug.Log("Is visible:" + isVisible);
             SetMeshRendererState(isVisible);
             SetColliderState(false);
-        }
-
-        public void SetAnimator(Animator animator)
-        {
-            this.animator = animator;
         }
 
         public void SetSource(AudioSource source)
         {
             this.source = source;
         }
-
-        protected void ChangeAnimation(string stateName, float crossFade)
+        protected void PlaySound(AudioClip clip)
         {
-            if(crossFade < 0.2f) { crossFade = 0.2f; }
-            animator.CrossFade(stateName, crossFade);
-        }
-
-        public void PlaySound(AudioClip clip)
-        {
-            if(clip == null && source != null)
+            if(clip != null && source != null)
             {
                 source.clip = clip;
                 source.Play();
             }
         }
-        
+
+        public override Sprite GetIcon()
+        {
+            return pickupSpriteIcon;
+        }
         public float GetWeight()
         {
             return weight;
+        }
+
+        public static void AddOnItemInteractOnceEvent(UnityAction<Item> action)
+        {
+            onItemInteractOnce.AddListener(action); 
+        }
+        public static void RemoveOnItemInteractOnceEvent(UnityAction<Item> action)
+        {
+            onItemInteractOnce.RemoveListener(action);
         }
     }
 }

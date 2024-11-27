@@ -22,9 +22,9 @@ namespace Redsilver2.Core.Stats
         public float DefaultRecoverySpeed => defaultRecoverySpeed;
         public float DefaultRecoveryWaitTime => defaultRecoveryWaitTime;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();   
+            base.Awake();   
             recoveryWaitTime = defaultRecoveryWaitTime;
             recoverySpeed    = defaultRecoverySpeed;
         }

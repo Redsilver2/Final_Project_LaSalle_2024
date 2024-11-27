@@ -1,45 +1,64 @@
-using Redsilver2.Core.Stats;
-using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Redsilver2.Core.Items
 {
-    [RequireComponent(typeof(Health))]
-    public class Flashlight : EquippableItem
+    public class Flashlight : LightSourceItem
     {
         [Space]
-        [SerializeField] private Light light;
+        [SerializeField] private Image fillbar;
+
+        [Space]
+        [SerializeField] private float fillbarColorLerpSpeed = 1.0f;    
 
         [Space]
         [SerializeField] private float batteryDrainPerSeconds;
 
-        private Health batteryPower;
-        private IEnumerator drainBatteryCoroutine;
+        [Space]
+        [SerializeField] private AudioClip flashlightOnClip;
+        [SerializeField] private AudioClip flashlightOffClip;
+        [SerializeField] private AudioClip flashlightEmptyClip;
 
-        protected override void Start()
+        private bool isDrainingBattery = false;
+
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
 
-            batteryPower = GetComponent<Health>();
-            batteryPower.AddOnValueChangedEvent((handler, isValueIncreasing) =>
+            lightLife.AddOnValueChangedEvent(value =>
             {
-                Debug.Log("Battery Power: " + handler.PercentageValue);
+                float percentage = lightLife.PercentageValue;
+                Color color = Color.red;
+
+                if(percentage >= 0.7f && percentage <= 1f)
+                {
+                    color = Color.green;
+                }
+                else if(percentage >= 0.3f && percentage < 0.7f)
+                {
+                    color = Color.yellow;
+                }
+
+                if (fillbar != null)
+                {
+                    Debug.LogWarning(percentage);
+                    fillbar.fillAmount = percentage;
+                    fillbar.color      = Color.Lerp(fillbar.color, color, fillbarColorLerpSpeed * Time.deltaTime);
+                }
+
             });
 
-            if (light)
-            {
-                light.enabled = false;
-            }
+            TurnLightOffEvent();
         }
 
 
         public override string GetName()
         {
-            return $"{base.GetName()} ({(int)(batteryPower.PercentageValue * 100f)}%)";
+            return $"{base.GetName()} ({(int)(lightLife.PercentageValue * 100f)}%)";
         }
 
-        public override Sprite GetInteractionSprite()
+        public override Sprite GetIcon()
         {
             return null;
         }
@@ -47,31 +66,46 @@ namespace Redsilver2.Core.Items
         public override void Equip()
         {
             base.Equip();
+            EnableControls();
         }
 
-        public override void UnEquipped()
+        public override void UnEquip()
         {
-            base.UnEquipped();
+            base.UnEquip();
+            DisableControls();
         }
 
-        private void DrainBattery()
+        public override void TurnLightState(InputAction.CallbackContext context)
         {
-            StopDrainBattery();
-            drainBatteryCoroutine = DrainBatteryCoroutine();
-            StartCoroutine(drainBatteryCoroutine);        
-        }
-
-        private void StopDrainBattery()
-        {
-            if(drainBatteryCoroutine != null)
+            if (context.performed)
             {
-                StopCoroutine(drainBatteryCoroutine);
+                isDrainingBattery = !isDrainingBattery;
+
+                if(lightLife.CurrentValue <= 0f)
+                {
+                    isDrainingBattery = false;
+                }
+
+                itemAnimationController.PlayAnimation(isDrainingBattery ? "Turn_On" : "Turn_Off");
             }
+        }
+
+        protected override void TurnLightOnEvent()
+        {
+            light.enabled = true;
+            StartDrainingLightLife();
+            PlaySound(flashlightOnClip);
+        }
+        protected override void TurnLightOffEvent()
+        {
+            isDrainingBattery = false;
+            light.enabled = false;
+            PlaySound(flashlightOffClip);
         }
 
         public void Recharge(float percentage, out bool isRecharged)
         {
-            float maxValue = batteryPower.MaxValue;
+            float maxValue = lightLife.MaxValue;
             isRecharged = false;
 
             if (percentage > 1f)
@@ -83,26 +117,24 @@ namespace Redsilver2.Core.Items
                 percentage = 0f;
             }
 
-            if(batteryPower.CurrentValue < maxValue)
+            if (lightLife.CurrentValue < maxValue)
             {
-                batteryPower.Heal(maxValue * percentage);
+                lightLife.Heal(maxValue * percentage);
                 isRecharged = true;
             }
-
-            //PlaySound();
         }
-        private IEnumerator DrainBatteryCoroutine()
-        {
-            while (batteryPower.CurrentValue > 0f)
-            {
-               batteryPower.Damage(batteryDrainPerSeconds * Time.deltaTime);
-               yield return null;
-            }
 
-            if(batteryPower.CurrentValue <= 0f)
+        protected override void SetControls(PlayerControls controls, bool isSettingControls)
+        {
+            if (isSettingControls)
             {
-                light.enabled = false;
+                controls.Inventory.Flashlight.performed += TurnLightState;
+            }
+            else
+            {
+                controls.Inventory.Flashlight.performed -= TurnLightState;
             }
         }
     }
+
 }

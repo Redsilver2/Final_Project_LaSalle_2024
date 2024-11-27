@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f77dfa879e8849f41863562d94d27103, type: 3}
+  m_Name: Flashlight
+  m_EditorClassIdentifier: 
+  defaultPosition: {x: -0.305, y: -0.385, z: 0.504}
+  defaultRotation: {x: 0, y: 0, z: 0}
+  minPositionLerpSpeed: 4
+  maxPositionLerpSpeed: 8
+  defaultRotationLerpSpeed: 0.5
+  minPositionX: -0.405
+  maxPositionX: -0.205
+  minPositionY: -0.385
+  maxPositionY: -0.285
+  minRotationX: 15
+  maxRotationX: -15
+  minRotationZ: 10
+  maxRotationZ: -10

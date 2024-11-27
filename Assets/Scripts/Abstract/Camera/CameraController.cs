@@ -1,8 +1,10 @@
+using Redsilver2.Core.Counters;
 using Redsilver2.Core.Events;
-using Redsilver2.Core.Player;
+using Redsilver2.Core.SceneManagement;
 using System.Collections;
+using System.Timers;
 using UnityEngine;
-using UnityEngine.Events;
+using Timer = Redsilver2.Core.Counters.Timer;
 
 namespace Redsilver2.Core.Controls
 {
@@ -19,67 +21,42 @@ namespace Redsilver2.Core.Controls
         [Space]
         [SerializeField] protected Transform playerBody;
 
+        private bool lastEnabledState;
+
         private   float minClampedRotationX;
         private   float maxClampedRotationX;
         protected float rotationTrackerX;
 
         private Transform cameraBody;
-
-        private PlayerCameraControls controls;
+        protected PlayerControls.CameraActions controls;
         private bool isFollowingPath = false;
 
 
-        protected bool enableControlsOnStart = false;
         protected Vector2 inputMotion;
-
         private static IEnumerator followPathCoroutine;     
         public Vector2 InputMotion => inputMotion;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
+            Camera camera             = Camera.main;
 
-            cameraBody      = Camera.main.transform;
-            controls        = new PlayerCameraControls();
+            cameraBody                = camera.transform;
+            controls                  = GameManager.Instance.GetComponent<InputManager>().PlayerControls.Camera;
 
             AddOnPathFollowStartedEvent(() => { isFollowingPath = true; });
             AddOnPathFollowCompletedEvent(() => { isFollowingPath = false; });
-
-            AddOnStateChangedEvent(isEnabled =>
-            {
-                if (controls != null)
-                {
-                    if (isEnabled)
-                    {
-                        controls.Enable();
-                    }
-                    else
-                    {
-                        controls.Disable();
-                    }
-                }
-            });
-
             ResetClampedRotationValue();
-
-            if (enableControlsOnStart)
-            {
-                controls.Enable();
-            }
-            else
-            {
-                enabled = false; 
-            }
         }
 
         protected virtual void Update()
         {
-            inputMotion = controls.Movement.Move.ReadValue<Vector2>();
+            inputMotion = controls.Move.ReadValue<Vector2>();
         }
 
         protected virtual void LateUpdate()
         {
-            inputMotion =(Vector2.right * inputMotion.x * sensitivityX + Vector2.up * inputMotion.y * sensitivityY) * Time.deltaTime;
+            inputMotion = (Vector2.right * inputMotion.x * sensitivityX + Vector2.up * inputMotion.y * sensitivityY) * Time.deltaTime;
 
             if (!isFollowingPath)
             {
@@ -89,13 +66,16 @@ namespace Redsilver2.Core.Controls
             }
         }
 
-        protected void OnEnable()
+        protected override void OnEnable()
         {
-           InvokeStateChangedEvent(true);
+            base.OnEnable();
+            PauseManager.AddOnGamePausedEvent(OnGamePausedEvent);
         }
-        protected void OnDisable()
+
+        protected override void OnDisable()
         {
-           InvokeStateChangedEvent(false);
+            base.OnDisable();
+            PauseManager.RemoveOnGamePausedEvent(OnGamePausedEvent);
         }
 
         protected abstract void RotateBody();
@@ -113,6 +93,18 @@ namespace Redsilver2.Core.Controls
         public void SetSensitivityY(float sensitvityY)
         {
             this.sensitivityY = sensitvityY;
+        }
+
+        public void EnabledControls(bool isEnabled)
+        {
+            if(isEnabled)
+            {
+                controls.Enable();
+            }
+            else
+            {
+                controls.Disable();
+            }
         }
 
         public void FollowPath(Transform parent, CameraPath[] paths, float duration)
@@ -145,10 +137,11 @@ namespace Redsilver2.Core.Controls
                 if (distance < closestDistance)
                 {
                     index = i;
+                    closestDistance = distance;
                 }
             }
 
-            duration /= Mathf.Abs(paths.Length - index);
+            duration /= Mathf.Abs(index + 1);
         }
         private IEnumerator FollowPathCoroutine(Transform parent, CameraPath[] paths, float duration)
         {
@@ -165,30 +158,20 @@ namespace Redsilver2.Core.Controls
                 {
                     CameraPath path = paths[i];
 
-                    Vector3 desiredPosition    = path.Position;
-                    Quaternion desiredRotation = path.Rotation;
-
                     Vector3 currentPosition    = cameraBody.localPosition;
                     Quaternion currentRotation = cameraBody.localRotation;
-
-                    float t = 0f;
                     InvokeOnPathIndexChanged(i, paths.Length);
 
-                    while (t < duration)
+                    yield return Counter.WaitForSeconds(duration, value =>
                     {
-                        float progress = t / duration;
-                        cameraBody.localPosition = Vector3.Lerp(currentPosition, desiredPosition, progress);
-                        cameraBody.localRotation = Quaternion.Lerp(currentRotation, desiredRotation, progress);
-
-                        t += Time.deltaTime;
-                        yield return null;
-                    }
-
-                    if (t >= duration)
+                        cameraBody.localPosition = Vector3.Lerp(currentPosition, path.Position, value);
+                        cameraBody.localRotation = Quaternion.Lerp(currentRotation, path.Rotation, value);
+                    },
+                    () =>
                     {
-                        cameraBody.localPosition = desiredPosition;
-                        cameraBody.localRotation = desiredRotation;
-                    }
+                        cameraBody.localPosition = path.Position;
+                        cameraBody.localRotation = path.Rotation;
+                    });
                 }
 
                 InvokeOnPathFollowCompleted();
@@ -209,10 +192,26 @@ namespace Redsilver2.Core.Controls
             minClampedRotationX = defaultMinClampedRotationX;
             maxClampedRotationX = defaultMaxClampedRotationX;
         }
-
+        
         public virtual void ResetRotationTrackers()
         {
             rotationTrackerX = 0f;
+        }
+
+        private void OnGamePausedEvent(bool isGamePaused)
+        {
+            if (!isGamePaused)
+            {
+                if (lastEnabledState)
+                {
+                    enabled = true;
+                }
+            }
+            else
+            {
+                lastEnabledState = enabled;
+                enabled = false;
+            }
         }
     }
 }

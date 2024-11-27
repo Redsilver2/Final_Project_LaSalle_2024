@@ -10,9 +10,9 @@ namespace Redsilver2.Core.Stats
         private float valueDecreaseSpeed;
         public float DefaultValueDecreaseSpeed => defaultValueDecreaseSpeed;
 
-        protected override void Start()
+        protected override void Awake()
         {
-            base.Start();
+            base.Awake();
             valueDecreaseSpeed = defaultValueDecreaseSpeed;
         }
 

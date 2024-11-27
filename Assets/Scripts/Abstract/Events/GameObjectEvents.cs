@@ -6,9 +6,11 @@ namespace Redsilver2.Core.Events
     public abstract class GameObjectEvents : MonoBehaviour
     {
         private UnityEvent<bool> onStateChanged;
+        private UnityEvent onDestroy;
 
-        protected virtual void Start()
+        protected virtual void Awake()
         {
+            onDestroy      = new UnityEvent();
             onStateChanged = new UnityEvent<bool>();
         }
 
@@ -21,9 +23,26 @@ namespace Redsilver2.Core.Events
             onStateChanged?.RemoveListener(action);
         }
 
-        public void InvokeStateChangedEvent(bool isEnabled)
+        public void AddOnDestroyEvent(UnityAction action)
         {
-            onStateChanged?.Invoke(isEnabled);
+            onDestroy.AddListener(action);
+        }
+        public void RemoveOnDestoryEvent(UnityAction action)
+        {
+            onDestroy.RemoveListener(action);
+        }
+
+        protected virtual void OnEnable()
+        {
+            onStateChanged?.Invoke(true);
+        }
+        protected virtual void OnDisable()
+        {
+            onStateChanged?.Invoke(false);
+        }
+        protected virtual void OnDestroy()
+        {
+            //onDestroy.Invoke();
         }
     }
 }
