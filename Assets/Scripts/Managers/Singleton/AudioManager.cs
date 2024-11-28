@@ -7,6 +7,7 @@ using System.Threading;
 using Redsilver2.Core.SceneManagement;
 using Timer = Redsilver2.Core.Counters.Timer;
 using Redsilver2.Core.Counters;
+using UnityEditor;
 
 namespace Redsilver2.Core.Audio
 {
@@ -15,9 +16,6 @@ namespace Redsilver2.Core.Audio
         [SerializeField] private AudioSource musicSource01;
         [SerializeField] private AudioSource musicSource02;
 
-        [Space]
-        [SerializeField] private AudioClip defaultMusicClip;
-        [SerializeField] private AudioClip chaseClip;
 
         [SerializeField] private AudioSource worldSourcePrefab;
         [SerializeField] private int maxWorldSourcesPoolSize = 5;
@@ -52,18 +50,6 @@ namespace Redsilver2.Core.Audio
             SetWorlSourcesPool();
             SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleLevelEvent);
         }
-      
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                LerpMusicSources(0f, defaultMusicClip);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                LerpMusicSources(0f, chaseClip);
-            }
-        }
 
         private void OnLoadSingleLevelEvent(int levelIndex)
         {
@@ -79,6 +65,8 @@ namespace Redsilver2.Core.Audio
                     audioSystemUpdateCoroutine = AudioSystemsUpdate();
                     StartCoroutine(audioSystemUpdateCoroutine);
                 }
+
+                LerpMusicSources(0, null);
             }
             else
             {
@@ -110,56 +98,52 @@ namespace Redsilver2.Core.Audio
                 muteMainSource = musicSource02;
             }
 
-            if (clip == null)
+
+            if (musicLerpCoroutine != null)
             {
-                if (time <= 0f || time >= clip.length)
-                {
-                    time = 0f;
-                }
+                StopCoroutine(musicLerpCoroutine);
+            }
 
-                if (musicLerpCoroutine != null)
-                {
-                    StopCoroutine(musicLerpCoroutine);
-                }
+            Debug.Log(nextMainSource);
 
-                if (nextMainSource != null)
+            if (nextMainSource != null)
+            {
+                if (nextMainSource.clip != clip)
                 {
-                    if (nextMainSource.clip != clip)
+                    if (time <= 0f || time >= clip.length)
                     {
-                        nextMainSource.clip = clip;
-                        nextMainSource.time = time;
-                        nextMainSource.Play();
+                        time = 0f;
                     }
 
-                    mainMusicSource = nextMainSource;
-
-                    musicLerpCoroutine = LerpSourcesVolume(mainMusicSource, muteMainSource, 5f);
-                    StartCoroutine(musicLerpCoroutine);
+                    nextMainSource.clip = clip;
+                    nextMainSource.time = time;
+                    nextMainSource.Play();
                 }
+
+                mainMusicSource = nextMainSource;
+                musicLerpCoroutine = LerpSourcesVolume(mainMusicSource, muteMainSource, 5f);
+                StartCoroutine(musicLerpCoroutine);
             }
         }
 
         private IEnumerator LerpSourcesVolume(AudioSource mainSource, AudioSource muteSource, float duration)
         {
-            float t = 0f;
-
             if (mainSource != null && muteSource != null)
             {
                 float originalMuteSourceVolume = muteSource.volume;
                 float originalMainSourceVolume = mainSource.volume;
 
-                while (t < duration)
+                yield return Counter.WaitForSeconds(duration, value =>
                 {
-                    float progress = t / duration;
-                    muteSource.volume = Mathf.Lerp(originalMuteSourceVolume, 0f, progress);
-                    mainSource.volume = Mathf.Lerp(originalMainSourceVolume, 1f, progress);
+                    muteSource.volume = Mathf.Lerp(originalMuteSourceVolume, 0f, value);
+                    mainSource.volume = Mathf.Lerp(originalMainSourceVolume, 1f, value);
 
-                    t += Time.deltaTime;
-                    yield return null;
-                }
-
-                muteSource.volume = 0f;
-                mainSource.volume = 1f;
+                }, 
+                () =>
+                {
+                    muteSource.volume = 0f;
+                    mainSource.volume = 1f;
+                });
             }
 
         }

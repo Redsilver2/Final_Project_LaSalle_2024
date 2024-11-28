@@ -15,20 +15,15 @@ MonoBehaviour:
   audioClip: {fileID: 0}
   subtitleDatas:
   - characterName: John
-    context: We have a job to do... Save all the Man and Woman of this nation. This
-      won't affect me in anyways, but you have to be a hero for once Martin.
+    context: Something about this place gives me the creep...
     startTime: 0
-    endTime: 6
-  - characterName: Martin
-    context: I know but.. what abou-
-    startTime: 8
-    endTime: 9
+    endTime: 2.5
   - characterName: John
-    context: There is nothing about this that will make me happier....
+    context: I remember losing my keys here last time that I came to visit, maybe
+      there are here?
+    startTime: 4
+    endTime: 6.5
+  - characterName: 
+    context: '*Feels Like something is watching me*'
     startTime: 9
-    endTime: 12
-  - characterName: Martin
-    context: I'm so sorry john... you don't deserve to hold the wait of all this
-      pain and suffering!
-    startTime: 16
-    endTime: 19
+    endTime: 13

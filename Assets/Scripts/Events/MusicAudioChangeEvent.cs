@@ -6,7 +6,6 @@ namespace Redsilver2.Core.Events
     [CreateAssetMenu(menuName = "Events/Music Change", fileName = "New Music Changed Event")]
     public class MusicAudioChangeEvent : GameEvent
     {
-        [SerializeField] private float lerpDuration;
         [SerializeField] private AudioClip clip;
 
         public override void Execute()
@@ -15,7 +14,7 @@ namespace Redsilver2.Core.Events
 
             if (audioManager != null) 
             {
-                audioManager.LerpMusicSources(lerpDuration, clip);
+                audioManager.LerpMusicSources(0.0f, clip);
             }
         }
     }

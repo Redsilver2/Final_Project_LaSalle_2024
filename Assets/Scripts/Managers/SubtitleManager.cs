@@ -10,7 +10,6 @@ namespace Redsilver2.Core.Subtitles
     public class SubtitleManager : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI subtitleDisplayer;
-        [SerializeField] private Subtitle test;
 
         [Space]
         [SerializeField][Range(0.1f, 1f)] private float textReadSpeed              = 1.0f;
@@ -39,8 +38,10 @@ namespace Redsilver2.Core.Subtitles
 
         private void Start()
         {
-            //subtitleDisplayer.canvasRenderer.SetAlpha(0f);
-           // PlaySubtitle(test);
+            if (subtitleDisplayer != null)
+            {
+                subtitleDisplayer.canvasRenderer.SetAlpha(0f);
+            }
         }
 
         public void PlaySubtitle(Subtitle subtitle)

@@ -9,10 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4cea8e4bc5cb6564aa11a6f917545439, type: 3}
-  m_Name: New Item Quest Progression Data
+  m_Script: {fileID: 11500000, guid: 74a7be3ed61b07343b4b4d5b49c97fc0, type: 3}
+  m_Name: SleepingQuater1
   m_EditorClassIdentifier: 
-  questProgressionObjectName: ---
-  description: Find a key to open the door...
-  maxProgressionValue: 1
-  questProgressionType: 0
+  subtitle: {fileID: 11400000, guid: 7b610919a804a4747901c8f2be47e357, type: 2}
