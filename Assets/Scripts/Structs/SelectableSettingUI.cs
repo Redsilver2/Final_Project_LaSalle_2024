@@ -8,19 +8,17 @@ namespace Redsilver2.Core.Settings
     [System.Serializable]
     public class SelectableSettingUI
     {
-        [HideInInspector] public string name;
         [SerializeField] private Button nextButton;
         [SerializeField] private Button prevButton;
         [SerializeField] private TextMeshProUGUI valueDisplayer;
 
-        private SettingType settingType;
+        [SerializeField]  protected SettingType settingType;
         private bool isEnabled;
 
 
-        public SelectableSettingUI(SettingType settingType) : base()
+        public SelectableSettingUI(SettingType settingType)
         {
             this.settingType     = settingType;
-            this.name = this.settingType.ToString();
             this.nextButton      = null;
             this.prevButton      = null;
             this.valueDisplayer  = null;
@@ -34,7 +32,7 @@ namespace Redsilver2.Core.Settings
                 SettingsManager settingsManager = SettingsManager.Instance;
                 isEnabled = true;
 
-                Debug.Log(settingType.GetType());
+                Debug.Log(settingType.ToString());
 
                 if (settingsManager != null)
                 {
@@ -64,10 +62,6 @@ namespace Redsilver2.Core.Settings
                 valueDisplayer.text = text;
             }
         }
-        public void SetSettingType(SettingType settingType)
-        {
-            this.settingType = settingType;
-        }
 
         public static void SetArray(ref SelectableSettingUI[] datas)
         {
@@ -84,7 +78,7 @@ namespace Redsilver2.Core.Settings
 
                     for (int j = 0; j < datas.Length; j++)
                     {
-                        if(datas[j].name == settingType.ToString())
+                        if(datas[j].settingType == settingType)
                         {
                             results[i] = datas[j];
                             foundSameUI = true;
@@ -99,6 +93,21 @@ namespace Redsilver2.Core.Settings
                 }
 
                 datas = results;
+            }
+        }
+
+        public static void SetSelectableSettingsUIState(SelectableSettingUI[] datas, bool isEnabled)
+        {
+            foreach (SelectableSettingUI ui in datas)
+            {
+                if (isEnabled)
+                {
+                    ui.Enable();
+                }
+                else
+                {
+                    ui.Disable();
+                }
             }
         }
     }

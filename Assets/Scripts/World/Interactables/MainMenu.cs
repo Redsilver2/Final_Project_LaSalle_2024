@@ -5,20 +5,32 @@ using UnityEngine.UI;
 
 namespace Redsilver2.Core
 {
-    [RequireComponent(typeof(Animator))]
     public class MainMenu : MonoBehaviour
     {
         [SerializeField] private GraphicRaycaster raycaster;
+        [SerializeField] private GameObject mainMenuParent;
+
         [SerializeField] private AnimationController animationController;
+        [SerializeField] private SelectableSettingUI[] selectableButtonSettings;
         private SceneLoaderManager sceneLoader;
+
+        #if UNITY_EDITOR
+        private void OnValidate()
+        {
+           SelectableSettingUI.SetArray(ref selectableButtonSettings);    
+        }
+        #endif
 
         private void Start()
         {
+            animationController.Init(mainMenuParent, false);
             sceneLoader = SceneLoaderManager.Instance;
+
             SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
 
             GameManager.SetCursorVisibility(true);
             GameManager.Instance.GetComponent<InputManager>().PlayerControls.Enable();
+            SelectableSettingUI.SetSelectableSettingsUIState(selectableButtonSettings, true);
         }
 
         public void LoadLevel(int levelIndex)
@@ -55,6 +67,11 @@ namespace Redsilver2.Core
             }
 
             SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
+        }
+
+        private void OnDisable()
+        {
+            SelectableSettingUI.SetSelectableSettingsUIState(selectableButtonSettings, false);
         }
     }
 

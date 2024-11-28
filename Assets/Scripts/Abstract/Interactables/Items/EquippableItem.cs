@@ -52,7 +52,7 @@ namespace Redsilver2.Core.Items
             inventory.AddOnItemAddedEvent(OnItemAddedEvent);
             inventory.AddOnItemRemovedEvent(OnItemRemovedEvent);
 
-            itemAnimationController.Init(gameObject);
+            itemAnimationController.Init(gameObject, true);
             isControlsSet = false;
             Physics.IgnoreCollision(GetComponent<Collider>(), PlayerController.Instance.GetComponent<Collider>());
         }

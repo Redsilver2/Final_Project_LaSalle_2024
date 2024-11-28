@@ -13,18 +13,21 @@ namespace Redsilver2.Core
         private string currentAnimationState;
         private Animator animator;
 
-        public void Init(GameObject item)
+        public void Init(GameObject item, bool isDisabled)
         {
             this.animator = item.GetComponent<Animator>();
-            Disable();
             animator.runtimeAnimatorController = animatorController;
+
+            if (isDisabled)
+            {
+                Disable();
+            }
         }
 
         protected void PlayAnimation(string stateName, float crossFade)
         {
             if (animator != null && stateName != string.Empty && stateName != currentAnimationState)
             {
-                if (crossFade < 0.2f) { crossFade = 0.2f; }
                 animator.enabled = true;
                 currentAnimationState = stateName;
                 animator.CrossFade(stateName, crossFade);
