@@ -50,7 +50,7 @@ namespace Redsilver2.Core.Player
             base.Awake();
 
             PlayerController player = PlayerController.Instance;
-            controls      = GameManager.Instance.GetComponent<InputManager>().PlayerControls.Inventory;;
+            controls = GameManager.Instance.GetComponent<InputManager>().PlayerControls.Inventory;
             items         = new List<EquippableItem>();
 
             player.AddOnStateChangedEvent(isEnabled =>

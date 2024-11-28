@@ -93,7 +93,7 @@ namespace Redsilver2.Core.Audio
             }
         }
 
-        private void LerpMusicSources(float time, AudioClip clip)
+        public void LerpMusicSources(float time, AudioClip clip)
         {
             AudioSource nextMainSource;
             AudioSource muteMainSource;

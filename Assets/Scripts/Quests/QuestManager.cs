@@ -1,6 +1,7 @@
 using Redsilver2.Core.Counters;
 using Redsilver2.Core.SceneManagement;
 using Redsilver2.Core.UI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -124,14 +125,22 @@ namespace Redsilver2.Core.Quests
                     index = mainQuests.Length - 1;
                 }
 
-                StartCoroutine(ActivateMainQuestCoroutine(waitTime, index));
+                StartCoroutine(StartQuestCoroutine(mainQuests[index], waitTime));
             }
         }
 
-        private IEnumerator ActivateMainQuestCoroutine(float waitTime, int index)
+        public void StartQuest(Quest quest, float waitTime)
         {
-            yield return Counter.WaitForSeconds(waitTime);
-            mainQuests[index].Enable(this);
+            StartCoroutine(StartQuestCoroutine(quest, waitTime));
+        }
+
+        private IEnumerator StartQuestCoroutine(Quest quest, float waitTime)
+        {
+            if (quest != null && !actifQuests.Contains(quest))
+            {
+                yield return Counter.WaitForSeconds(waitTime);
+                quest.Enable(this);
+            }
         }
 
         public void AddActifQuest(Quest quest)
