@@ -26,8 +26,6 @@ namespace Redsilver2.Core
             animationController.Init(mainMenuParent, false);
             sceneLoader = SceneLoaderManager.Instance;
 
-            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
-
             GameManager.SetCursorVisibility(true);
             GameManager.Instance.GetComponent<InputManager>().PlayerControls.Enable();
             SelectableSettingUI.SetSelectableSettingsUIState(selectableButtonSettings, true);
@@ -65,13 +63,17 @@ namespace Redsilver2.Core
             {
                 raycaster.enabled = false;
             }
+        }
 
-            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
+        private void OnEnable()
+        {
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
 
         private void OnDisable()
         {
             SelectableSettingUI.SetSelectableSettingsUIState(selectableButtonSettings, false);
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
     }
 

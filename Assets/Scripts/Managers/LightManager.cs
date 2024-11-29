@@ -26,7 +26,6 @@ namespace Redsilver2.Core.Lights {
             }
 
             lightSystems = new List<LightSystem>();
-            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleLevel);
         }
 
         private IEnumerator UpdateLightSystems()
@@ -70,8 +69,6 @@ namespace Redsilver2.Core.Lights {
                 {
                     StopCoroutine(updateLightSystemsCoroutine);
                 }
-
-                updateLightSystemsCoroutine = null;
             }
         }
 
@@ -89,6 +86,16 @@ namespace Redsilver2.Core.Lights {
             {
                 lightSystems.Remove(system);
             }
+        }
+
+        private void OnEnable()
+        {
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleLevel);
+        }
+
+        private void OnDisable()
+        {
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleLevel);
         }
     }
 }

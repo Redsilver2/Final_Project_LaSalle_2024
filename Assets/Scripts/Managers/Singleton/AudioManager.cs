@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
 using Redsilver2.Core.SceneManagement;
-using Timer = Redsilver2.Core.Counters.Timer;
 using Redsilver2.Core.Counters;
-using UnityEditor;
 
 namespace Redsilver2.Core.Audio
 {
@@ -49,12 +47,23 @@ namespace Redsilver2.Core.Audio
 
             SetWorlSourcesPool();
             SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleLevelEvent);
+            SceneLoaderManager.AddOnSingleLevelLoadedEvent(levelIndex =>
+            {
+                if (musicLerpCoroutine != null)
+                {
+                    StopCoroutine(musicLerpCoroutine);
+                }
+
+                musicSource01.volume = 0f;
+                musicSource02.volume = 0f;
+
+                Debug.LogWarning("????");
+            });
         }
 
         private void OnLoadSingleLevelEvent(int levelIndex)
-        {
+        {     
             audioSystems.Clear();
-            Debug.LogWarning("Audio Manager");
 
             if (levelIndex != 0)
             {
@@ -65,8 +74,6 @@ namespace Redsilver2.Core.Audio
                     audioSystemUpdateCoroutine = AudioSystemsUpdate();
                     StartCoroutine(audioSystemUpdateCoroutine);
                 }
-
-                LerpMusicSources(0, null);
             }
             else
             {
@@ -76,10 +83,22 @@ namespace Redsilver2.Core.Audio
                 {
                     StopCoroutine(audioSystemUpdateCoroutine);
                 }
-
-                audioSystemUpdateCoroutine = null;
             }
         }
+
+        private void OnSingleLevelLoadedEvent(int levelIndex)
+        {
+            if (musicLerpCoroutine != null)
+            {
+                StopCoroutine(musicLerpCoroutine);
+            }
+
+            musicSource01.volume = 0f;
+            musicSource02.volume = 0f;
+
+            Debug.LogWarning("????");
+        }
+
 
         public void LerpMusicSources(float time, AudioClip clip)
         {

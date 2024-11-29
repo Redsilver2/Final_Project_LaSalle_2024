@@ -14,12 +14,14 @@ namespace Redsilver2.Core.Quests
         [SerializeField] private TextMeshProUGUI questDisplayer;
         [SerializeField] private float questNameSize = 50;
 
+        private bool isShowingQuests = false;
+
         [Space]
         [SerializeField] private Quest[] mainQuests;
-
         private IEnumerator questCoroutine;
 
 
+        private Queue<IEnumerator> startQuestCoroutines;
         private List<Quest>        actifQuests;
         public static QuestManager Instance {  get; private set; }
 
@@ -45,20 +47,18 @@ namespace Redsilver2.Core.Quests
                 questDisplayer.canvasRenderer.SetAlpha(0);
             }
 
-            SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
-            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
+            startQuestCoroutines = new Queue<IEnumerator>();
         }
 
         private void OnSingleSceneLoadedEvent(int levelIndex)
         {
-            if (levelIndex != 0)
-            {
-                ActivateMainQuest(1f, 0);
-            }
-        }
-        private void OnLoadSingleSceneEvent(int levelIndex)
-        {
+            StopAllCoroutines();
             FadeQuestShowcase();
+
+            if (levelIndex == 0)
+            {
+                actifQuests.Clear();
+            }
         }
 
         public void FadeQuestShowcase()
@@ -131,15 +131,36 @@ namespace Redsilver2.Core.Quests
 
         public void StartQuest(Quest quest, float waitTime)
         {
-            StartCoroutine(StartQuestCoroutine(quest, waitTime));
+            if (startQuestCoroutines.Count > 0)
+            {
+                waitTime = 0f;
+            }
+
+            startQuestCoroutines.Enqueue(StartQuestCoroutine(quest, waitTime));
+
+            if (startQuestCoroutines.Count == 1 && isShowingQuests == false)
+            {
+                StartCoroutine(startQuestCoroutines.Dequeue());
+            }
         }
 
         private IEnumerator StartQuestCoroutine(Quest quest, float waitTime)
         {
+            isShowingQuests = true;
+
             if (quest != null && !actifQuests.Contains(quest))
             {
                 yield return Counter.WaitForSeconds(waitTime);
                 quest.Enable(this);
+
+                if(startQuestCoroutines.Count > 0)
+                {
+                    StartCoroutine(startQuestCoroutines.Dequeue());
+                }
+                else
+                {
+                    isShowingQuests = false;
+                }
             }
         }
 
@@ -176,6 +197,17 @@ namespace Redsilver2.Core.Quests
             }
 
             return result;
+        }
+
+        private void OnEnable()
+        {
+            SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
+        }
+
+        private void OnDisable()
+        {
+
+            SceneLoaderManager.RemoveOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
         }
     }
 }

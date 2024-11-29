@@ -1,4 +1,5 @@
 using Redsilver2.Core.Counters;
+using Redsilver2.Core.SceneManagement;
 using Redsilver2.Core.UI;
 using System.Collections;
 using System.Linq;
@@ -104,6 +105,18 @@ namespace Redsilver2.Core.Subtitles
             }
         }
 
+        private void OnLevelLoadedEvent(int sceneIndex)
+        {
+            StopSubtitle();
+
+            if (subtitleDisplayer != null)
+            {
+                subtitleDisplayer.text = string.Empty;
+            }
+
+            SetSubtitleVisility(false);
+        }
+
         private IEnumerator PlaySubtitleCoroutine(Subtitle subtitle, int starterIndex)
         {
             SubtitleData[] datas         = subtitle.datas;     
@@ -205,9 +218,20 @@ namespace Redsilver2.Core.Subtitles
                 subtitleDisplayer.gameObject.SetActive(isVisible);
             }
         }
+
         public void SetSubtitleNameVisility(bool isVisible)
         {
             canDisplayCharacterName = isVisible;
+        }
+
+        private void OnEnable()
+        {
+            SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnLevelLoadedEvent);
+        }
+
+        private void OnDisable()
+        {
+            SceneLoaderManager.RemoveOnSingleLevelLoadedEvent(OnLevelLoadedEvent);
         }
     }        
 }

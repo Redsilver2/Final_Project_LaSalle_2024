@@ -1,6 +1,4 @@
 using Redsilver2.Core.Audio;
-using Redsilver2.Core.Counters;
-using Redsilver2.Core.UI;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,17 +31,13 @@ namespace Redsilver2.Core.SceneManagement
                 Destroy(this);
             }
 
-            onSingleSceneLoaded = new UnityEvent<int>();
-            onLoadSingleScene   = new UnityEvent<int>();
-        }
-
-        private void Start()
-        {   
             if (loadingScreenBackground != null)
             {
                 loadingScreenBackground.SetAlpha(0f);
-                loadingScreenBackground.gameObject.SetActive(false);    
+                loadingScreenBackground.gameObject.SetActive(false);
             }
+
+            SelectedSingleLevelIndex = SceneManager.GetActiveScene().buildIndex;
         }
 
         public void LoadSingleScene(int levelIndex)
@@ -57,18 +51,14 @@ namespace Redsilver2.Core.SceneManagement
                 levelIndex = SceneManager.sceneCountInBuildSettings - 1;
             }
 
-            if (!IsLoadingSingleScene && SelectedSingleLevelIndex != levelIndex)
+            if (!IsLoadingSingleScene && levelIndex != SelectedSingleLevelIndex)
             {
-                Debug.LogWarning("???");
-
                 IsLoadingSingleScene = true;
                 SelectedSingleLevelIndex = levelIndex;
 
                 loadingScreenBackground.gameObject.SetActive(true);
                 StartCoroutine(LoadSingleSceneCoroutine());
             }
-
-            Debug.LogWarning("!!!");
         }
 
 
@@ -91,6 +81,8 @@ namespace Redsilver2.Core.SceneManagement
             }
 
             operation.allowSceneActivation = true;
+
+            Debug.LogWarning($"Level Load Completed");
             onSingleSceneLoaded.Invoke(SelectedSingleLevelIndex);
 
             StartCoroutine(AudioManager.LerpAudioListenerVolume(false, loadingScreenAlphaLerpDuration));

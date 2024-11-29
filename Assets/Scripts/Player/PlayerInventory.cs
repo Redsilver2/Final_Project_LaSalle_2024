@@ -97,7 +97,6 @@ namespace Redsilver2.Core.Player
             controls.Slot04.performed += OnSlot04InputPerformed;
             controls.Drop.performed   += OnDropItemInputPerformed;
 
-            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
             StartCoroutine(SetStarterItems());
         }
 
@@ -249,6 +248,12 @@ namespace Redsilver2.Core.Player
             controls.Slot03.performed -= OnSlot03InputPerformed;
             controls.Slot04.performed -= OnSlot04InputPerformed;
             controls.Drop.performed   -= OnDropItemInputPerformed;
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
 
         protected override void OnDisable()

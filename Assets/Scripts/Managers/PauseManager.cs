@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Redsilver2.Core
@@ -99,7 +100,7 @@ namespace Redsilver2.Core
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Escape) && !SceneLoaderManager.IsLoadingSingleScene && SceneLoaderManager.SelectedSingleLevelIndex != 0)
+            if (Input.GetKeyDown(KeyCode.Escape) && !SceneLoaderManager.IsLoadingSingleScene && SceneManager.GetActiveScene().buildIndex != 0)
             {
                 IsGamePaused = !IsGamePaused;
                 onGamePaused.Invoke(IsGamePaused);

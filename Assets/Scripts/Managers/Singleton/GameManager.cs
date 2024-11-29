@@ -16,7 +16,6 @@ namespace Redsilver2.Core
     [RequireComponent(typeof(SubtitleManager))]
     public class GameManager : MonoBehaviour
     {
-        private int daysLeft      = 0;   
         public static GameManager Instance { get; private set; }
 
 
@@ -32,23 +31,6 @@ namespace Redsilver2.Core
                 Destroy(gameObject);
             }
         }
-
-
-        public void SpawnPlayer()
-        {
-
-        }
-
-        public void DecreaseDaysLeft()
-        {
-            daysLeft--;
-
-            if(daysLeft <= 0)
-            {
-                // Do something here
-            }
-        }
-
 
         public static void SetCursorVisibility(bool isVisible)
         {

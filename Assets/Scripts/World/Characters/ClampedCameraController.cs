@@ -36,13 +36,6 @@ namespace Redsilver2.Core.Controls
                 enabled = false;
             }
         }
-
-        protected override void Update()
-        {
-            base.Update();
-            Debug.LogWarning("???");
-        }
-
         protected override void RotateBody()
         {
             if(playerBody != null)

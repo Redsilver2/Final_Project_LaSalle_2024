@@ -82,7 +82,6 @@ namespace Redsilver2.Core.Audio
         private void OnLoadSingleLevelEvent(int levelIndex) 
         {
             StartCoroutine(ReturnSourceToWorldCoroutine(SceneLoaderManager.Instance.LoadingScreenAlphaLerpDuration - 0.1f));
-            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleLevelEvent);
         }
  
         public void Set(bool isActive)
@@ -181,6 +180,11 @@ namespace Redsilver2.Core.Audio
                     source = null;
                 }
             }
+        }
+
+        protected override void OnDisable()
+        {
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadSingleLevelEvent);
         }
     }
 }

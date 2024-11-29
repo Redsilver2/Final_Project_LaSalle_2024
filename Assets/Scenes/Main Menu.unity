@@ -2569,7 +2569,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 16777215
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -7690,6 +7690,38 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4726531277784791770, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4726531277784791770, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4726531277784791770, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4726531277784791770, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8215915866099003504, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8215915866099003504, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8215915866099003504, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8215915866099003504, guid: 758fae4d98eb5824aa706295b64f855e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8267,7 +8299,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Untitle Game (Demo)
+  m_text: Untitled Horror Game (Demo)
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2c397b09d04b7b245a3db07053eb7551, type: 2}
   m_sharedMaterial: {fileID: -7533201865882235633, guid: 2c397b09d04b7b245a3db07053eb7551, type: 2}

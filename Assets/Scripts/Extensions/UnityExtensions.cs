@@ -50,6 +50,21 @@ namespace Redsilver2.Core {
             });
         }
 
+        public static IEnumerator FadeCanvasGroup(this CanvasGroup canvasGroup, bool isVisible, float duration)
+        {
+            float targetAlpha = isVisible ? 1f : 0f;
+            float currentAlpha = canvasGroup.alpha;
+
+            yield return Counter.WaitForSeconds(duration, value =>
+            {
+                canvasGroup.alpha = Mathf.Lerp(currentAlpha, targetAlpha, value);
+            },
+            () =>
+            {
+                canvasGroup.alpha = targetAlpha;
+            });
+        }
+
         public static void StartCoroutines(this MonoBehaviour monoBehaviour, IEnumerator[] enumerators)
         {
             foreach (IEnumerator enumerator in enumerators) 
