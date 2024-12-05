@@ -12,6 +12,11 @@ namespace Redsilver2.Core.Quests
 
         public QuestProgressionData ProgressionData => progressionData;
 
+        public void Reset()
+        {
+            progressionValue = 0;
+        }
+
         public void Progress(float progressionIncrement)
         {
             if (progressionData != null && !IsDone())

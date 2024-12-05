@@ -10,6 +10,8 @@ namespace Redsilver2.Core.Items
     [RequireComponent(typeof(Animator))]
     public abstract class Item : Interactable, IWeighable
     {
+        [SerializeField] private GameObject showcaseClone;
+
         [Space]
         [SerializeField] protected float weight;
 
@@ -29,13 +31,20 @@ namespace Redsilver2.Core.Items
         private static UnityEvent<Item> onItemInteractOnce = new UnityEvent<Item>();
         private static UnityEvent<Item> onItemInteract     = new UnityEvent<Item>();
 
-        public MeshFilter MeshFilter => meshFilter;
+        public GameObject ShowcaseClone => showcaseClone;
 
         protected override void Awake()
         {
             base.Awake();
+             ;
 
             inventory  = Camera.main.GetComponent<PlayerInventory>();
+          
+            if (showcaseClone != null)
+            {
+                inventory.AddItemInpesctionObject(showcaseClone);
+            }
+
             meshFilter = GetComponent<MeshFilter>();
             renderer   = GetComponent<MeshRenderer>();
             collider   = GetComponent<Collider>();

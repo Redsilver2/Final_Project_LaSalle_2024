@@ -1,4 +1,5 @@
 using Redsilver2.Core.Audio;
+using Redsilver2.Core.Enemy;
 using UnityEngine;
 
 namespace Redsilver2.Core.Events
@@ -14,7 +15,12 @@ namespace Redsilver2.Core.Events
 
             if (audioManager != null) 
             {
-                audioManager.LerpMusicSources(0.0f, clip);
+                audioManager.SetMainMusicClip(clip);
+
+                if (EnemyStateController.HighestEnemyState < EnemyState.Search)
+                {
+                    audioManager.LerpMusicSources(0.0f, clip);
+                }
             }
         }
     }

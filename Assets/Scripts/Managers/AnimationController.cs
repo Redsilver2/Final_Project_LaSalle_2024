@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 namespace Redsilver2.Core
@@ -8,19 +9,24 @@ namespace Redsilver2.Core
 
         [Space]
         [SerializeField] protected RuntimeAnimatorController animatorController;
-        [SerializeField] private AnimationData[] animationDatas;
+        [SerializeField] private   AnimationData[] animationDatas;
 
-        private string currentAnimationState;
-        private Animator animator;
+        private AnimationClip currentAnimation;
+        protected string currentAnimationState = string.Empty;
+        protected Animator animator;
 
-        public void Init(GameObject item, bool isDisabled)
+        public void Init(Animator animator, bool isDisabled)
         {
-            this.animator = item.GetComponent<Animator>();
-            animator.runtimeAnimatorController = animatorController;
+            this.animator = animator;
 
-            if (isDisabled)
+            if (animator != null)
             {
-                Disable();
+                animator.runtimeAnimatorController = animatorController;
+
+                if (isDisabled)
+                {
+                    Disable();
+                }
             }
         }
 
@@ -28,7 +34,6 @@ namespace Redsilver2.Core
         {
             if (animator != null && stateName != string.Empty && stateName != currentAnimationState)
             {
-                animator.enabled = true;
                 currentAnimationState = stateName;
                 animator.CrossFade(stateName, crossFade);
             }
@@ -37,27 +42,61 @@ namespace Redsilver2.Core
         public void ResetAnimationState()
         {
             currentAnimationState = string.Empty;
+            currentAnimation = null;
         }
 
         public void PlayAnimation(string keyword)
         {
-            if(TryGetAnimationDataByKeyword(keyword, out AnimationData animationData))
+            if (animator == null)
             {
-                PlayAnimation(animationData.Animation.name, animationData.CrossFadeTime);
+                Debug.LogWarning("No animator found!");
+                return;
+            }
+
+            bool canPlayAnimation = true;
+
+            if (currentAnimationState != string.Empty) 
+            {
+                if (currentAnimationState.ToLower().Contains(keyword.ToLower()))
+                {
+                    canPlayAnimation = false;
+                }
+            }
+
+            if (canPlayAnimation && TryGetAnimationDatasByKeyword(keyword, out AnimationData[] animationDatas))
+            {
+                AnimationData currentAnimationData = GetRandomAnimationData(animationDatas);
+
+                if (currentAnimationData != null)
+                {
+                    currentAnimation = currentAnimationData.Animation;
+                    PlayAnimation(currentAnimation.name, currentAnimationData.CrossFadeTime);
+                }
+                else
+                {
+                    Debug.LogWarning("No animation data found!");
+                }
             }
         }
+
+        private AnimationData GetRandomAnimationData(AnimationData[] animationDatas)
+        {
+            int index = Random.Range(0, animationDatas.Length);
+            return animationDatas[index];
+        }
+
         public float GetAnimationLenght(string keyword)
         {
-            if (TryGetAnimationDataByKeyword(keyword, out AnimationData animationData))
+            if (currentAnimation != null)
             {
-                return animationData.Animation.length;
+                return currentAnimation.length;
             }
 
             return 0f;
         }
         private bool TryGetAnimationDataByKeyword(string keyword, out AnimationData animationData)
         {
-            animationData = new AnimationData();
+            animationData = null;
 
             for (int i = 0; i < animationDatas.Length; i++)
             {
@@ -66,6 +105,20 @@ namespace Redsilver2.Core
                     animationData = animationDatas[i];
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        private bool TryGetAnimationDatasByKeyword(string keyword, out AnimationData[] animationDatas)
+        {
+            animationDatas = null;
+
+            if (TryGetAnimationDataByKeyword(keyword, out AnimationData data))
+            {
+                animationDatas = this.animationDatas.Where(x => x.Compare(keyword)).ToArray();
+                Debug.LogError(animationDatas.Length);
+                return true;
             }
 
             return false;

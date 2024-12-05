@@ -15,7 +15,7 @@ MonoBehaviour:
   audioClip: {fileID: 0}
   subtitleDatas:
   - characterName: John
-    context: Something about this place gives me the creep...
+    context: Something about this place gives me the <color=red>creeps....
     startTime: 0
     endTime: 2.5
   - characterName: John

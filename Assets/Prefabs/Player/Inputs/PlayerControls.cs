@@ -194,6 +194,15 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Inspect"",
+                    ""type"": ""Button"",
+                    ""id"": ""e932c344-a30e-4e90-a47c-50969400d155"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -326,6 +335,28 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Keyboard"",
                     ""action"": ""Flashlight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bca5f9eb-6836-4111-9566-c86651408a0b"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard"",
+                    ""action"": ""Inspect"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5a12f49e-45c0-4a70-bbc3-5b085e3d87a7"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Controller"",
+                    ""action"": ""Inspect"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -584,6 +615,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Inventory_Slot04 = m_Inventory.FindAction("Slot04", throwIfNotFound: true);
         m_Inventory_Drop = m_Inventory.FindAction("Drop", throwIfNotFound: true);
         m_Inventory_Flashlight = m_Inventory.FindAction("Flashlight", throwIfNotFound: true);
+        m_Inventory_Inspect = m_Inventory.FindAction("Inspect", throwIfNotFound: true);
         // Interaction
         m_Interaction = asset.FindActionMap("Interaction", throwIfNotFound: true);
         m_Interaction_Interact = m_Interaction.FindAction("Interact", throwIfNotFound: true);
@@ -726,6 +758,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Inventory_Slot04;
     private readonly InputAction m_Inventory_Drop;
     private readonly InputAction m_Inventory_Flashlight;
+    private readonly InputAction m_Inventory_Inspect;
     public struct InventoryActions
     {
         private @PlayerControls m_Wrapper;
@@ -736,6 +769,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         public InputAction @Slot04 => m_Wrapper.m_Inventory_Slot04;
         public InputAction @Drop => m_Wrapper.m_Inventory_Drop;
         public InputAction @Flashlight => m_Wrapper.m_Inventory_Flashlight;
+        public InputAction @Inspect => m_Wrapper.m_Inventory_Inspect;
         public InputActionMap Get() { return m_Wrapper.m_Inventory; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -763,6 +797,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Flashlight.started += instance.OnFlashlight;
             @Flashlight.performed += instance.OnFlashlight;
             @Flashlight.canceled += instance.OnFlashlight;
+            @Inspect.started += instance.OnInspect;
+            @Inspect.performed += instance.OnInspect;
+            @Inspect.canceled += instance.OnInspect;
         }
 
         private void UnregisterCallbacks(IInventoryActions instance)
@@ -785,6 +822,9 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Flashlight.started -= instance.OnFlashlight;
             @Flashlight.performed -= instance.OnFlashlight;
             @Flashlight.canceled -= instance.OnFlashlight;
+            @Inspect.started -= instance.OnInspect;
+            @Inspect.performed -= instance.OnInspect;
+            @Inspect.canceled -= instance.OnInspect;
         }
 
         public void RemoveCallbacks(IInventoryActions instance)
@@ -995,6 +1035,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         void OnSlot04(InputAction.CallbackContext context);
         void OnDrop(InputAction.CallbackContext context);
         void OnFlashlight(InputAction.CallbackContext context);
+        void OnInspect(InputAction.CallbackContext context);
     }
     public interface IInteractionActions
     {

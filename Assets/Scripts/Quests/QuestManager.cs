@@ -4,6 +4,7 @@ using Redsilver2.Core.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -14,7 +15,8 @@ namespace Redsilver2.Core.Quests
         [SerializeField] private TextMeshProUGUI questDisplayer;
         [SerializeField] private float questNameSize = 50;
 
-        private bool isShowingQuests = false;
+        private bool isShowingQuest = false;
+        private bool isShowingAllQuests = false;
 
         [Space]
         [SerializeField] private Quest[] mainQuests;
@@ -35,19 +37,19 @@ namespace Redsilver2.Core.Quests
             {
                 Destroy(this);
             }
+
+            actifQuests = new List<Quest>();
+            startQuestCoroutines = new Queue<IEnumerator>();
         }
 
         private void Start()
         {
-            actifQuests = new List<Quest>();
 
-            if(questDisplayer != null)
+            if (questDisplayer != null)
             {
                 questDisplayer.text = string.Empty;
                 questDisplayer.canvasRenderer.SetAlpha(0);
             }
-
-            startQuestCoroutines = new Queue<IEnumerator>();
         }
 
         private void OnSingleSceneLoadedEvent(int levelIndex)
@@ -57,6 +59,7 @@ namespace Redsilver2.Core.Quests
 
             if (levelIndex == 0)
             {
+                foreach (Quest quest in actifQuests) quest.Reset();
                 actifQuests.Clear();
             }
         }
@@ -82,8 +85,6 @@ namespace Redsilver2.Core.Quests
             questCoroutine = ShowcaseQuestsCoroutine();
             StartCoroutine(questCoroutine); 
         }
-
-
 
         public IEnumerator ShowcaseQuestsCoroutine()
         {
@@ -129,40 +130,53 @@ namespace Redsilver2.Core.Quests
             }
         }
 
-        public void StartQuest(Quest quest, float waitTime)
+        public void StartQuest(string questName, bool isMainQuest, float waitTime)
         {
             if (startQuestCoroutines.Count > 0)
             {
                 waitTime = 0f;
             }
 
-            startQuestCoroutines.Enqueue(StartQuestCoroutine(quest, waitTime));
+            Quest quest = mainQuests.Where(x => x.QuestName.ToLower().Contains(questName.ToLower())).First();
 
-            if (startQuestCoroutines.Count == 1 && isShowingQuests == false)
+            if (quest != null)
             {
-                StartCoroutine(startQuestCoroutines.Dequeue());
+                startQuestCoroutines.Enqueue(StartQuestCoroutine(quest, waitTime));
+
+                if (startQuestCoroutines.Count == 1 && isShowingAllQuests != true)
+                {
+                    StartCoroutine(startQuestCoroutines.Dequeue());
+                }
             }
         }
 
         private IEnumerator StartQuestCoroutine(Quest quest, float waitTime)
         {
-            isShowingQuests = true;
+            isShowingAllQuests = true;
 
             if (quest != null && !actifQuests.Contains(quest))
             {
+                Quest questCopy = quest;
+                Debug.LogWarning("2");
                 yield return Counter.WaitForSeconds(waitTime);
-                quest.Enable(this);
+                questCopy.Enable(this);
+
+                while (isShowingQuest) yield return null;
 
                 if(startQuestCoroutines.Count > 0)
                 {
+                    Debug.LogWarning("3");
                     StartCoroutine(startQuestCoroutines.Dequeue());
                 }
                 else
                 {
-                    isShowingQuests = false;
+                    Debug.LogWarning("4");
+                    isShowingAllQuests = false;
                 }
             }
         }
+
+        public bool ContainsQuest(Quest quest) => actifQuests.Contains(quest);
 
         public void AddActifQuest(Quest quest)
         {
@@ -171,7 +185,6 @@ namespace Redsilver2.Core.Quests
                 actifQuests.Add(quest); 
             }
         }
-
         public void RemoveActifQuest(Quest quest)
         {
             if (quest != null && ContainsActifQuest(quest))
@@ -179,7 +192,6 @@ namespace Redsilver2.Core.Quests
                 actifQuests.Remove(quest);
             }
         }
-
         private bool ContainsActifQuest(Quest quest)
         {
             bool result = false;
@@ -203,7 +215,6 @@ namespace Redsilver2.Core.Quests
         {
             SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
         }
-
         private void OnDisable()
         {
 

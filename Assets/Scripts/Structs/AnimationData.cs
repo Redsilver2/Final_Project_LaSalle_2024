@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Redsilver2.Core
 {
     [System.Serializable]
-    public struct AnimationData 
+    public class AnimationData 
     {
         [SerializeField] private AnimationClip animation;
         [SerializeField] private float         crossfadeTime;

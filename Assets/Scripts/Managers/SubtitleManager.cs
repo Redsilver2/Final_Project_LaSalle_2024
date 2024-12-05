@@ -1,8 +1,6 @@
 using Redsilver2.Core.Counters;
 using Redsilver2.Core.SceneManagement;
-using Redsilver2.Core.UI;
 using System.Collections;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -91,7 +89,6 @@ namespace Redsilver2.Core.Subtitles
                 visibilitySubtitleCoroutine = null;
             }
 
-
             if (writeSubtitleCoroutine != null)
             {
                 StopCoroutine(writeSubtitleCoroutine);
@@ -140,6 +137,7 @@ namespace Redsilver2.Core.Subtitles
                 timer.Start();
             }
 
+            SetSubtitleVisility(true);
             LerpSubtitleVisibility(0.1f, false);
 
             for (int i = starterIndex; i < datas.Length; i++)
@@ -190,11 +188,15 @@ namespace Redsilver2.Core.Subtitles
             {
                 string characterNameText;
                 float  waitTime = duration / text.Length;
-
                 currentSubtitleDisplayerText = string.Empty;
+                // text = Regex.Replace(text, "<.*?>", string.Empty); // Remove all tags.
 
-                foreach (char c in text.ToCharArray())
+                char[] chars = text.ToCharArray();
+
+                for(int i = 0; i < chars.Length; i++) 
                 {
+                    char c = chars[i];  
+
                     if(characterName == string.Empty || !canDisplayCharacterName)
                     {
                         characterNameText = string.Empty;
@@ -204,11 +206,37 @@ namespace Redsilver2.Core.Subtitles
                         characterNameText = characterName + ": ";
                     }
 
-                    currentSubtitleDisplayerText += c;
-                    subtitleDisplayer.text = characterNameText + currentSubtitleDisplayerText;
-                    yield return Counter.WaitForSeconds(waitTime * textReadSpeed);
+                    if (c == '<')
+                    {
+                        currentSubtitleDisplayerText += RemoveRichTextTag(chars, ref i);
+                    }
+                    else
+                    {
+                        currentSubtitleDisplayerText += c;
+                        subtitleDisplayer.text = characterNameText + currentSubtitleDisplayerText;
+                        yield return Counter.WaitForSeconds(waitTime * textReadSpeed);
+                    }
                 }
             }
+        }
+
+        private string RemoveRichTextTag(char[] chars, ref int currentIndex)
+        {
+            string result = string.Empty;
+
+            for (int i = currentIndex; i < chars.Length; i++)
+            {
+                char c = chars[i];
+                result += c;
+
+                if (c == '>')
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            return result;
         }
 
         public void SetSubtitleVisility(bool isVisible)

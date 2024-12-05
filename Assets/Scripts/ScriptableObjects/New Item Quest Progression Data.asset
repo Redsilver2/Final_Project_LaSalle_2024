@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cea8e4bc5cb6564aa11a6f917545439, type: 3}
   m_Name: New Item Quest Progression Data
   m_EditorClassIdentifier: 
-  questProgressionObjectName: ---
+  questProgressionObjectName: aaa
   description: Find a key to open the door...
   maxProgressionValue: 1
-  questProgressionType: 0
+  questProgressionType: 1

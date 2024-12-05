@@ -12,17 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96b846055b312f64fb69dfbc059bea43, type: 3}
   m_Name: New Quest
   m_EditorClassIdentifier: 
-  quest:
-    questName: The ones who suffer
-    questsProgressions:
-    - progressionData: {fileID: 11400000, guid: 9cb054fcb44691a49b44c527b12deed3, type: 2}
-      onQuestProgressionUpdated:
-        m_PersistentCalls:
-          m_Calls: []
-    onQuestStarted:
-      m_PersistentCalls:
-        m_Calls: []
-    onQuestFinished:
-      m_PersistentCalls:
-        m_Calls: []
-  waitTime: 15
+  questName: A Lost Key
+  isMainQuest: 1
+  waitTime: 2

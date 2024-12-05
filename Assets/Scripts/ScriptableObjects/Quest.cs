@@ -19,6 +19,19 @@ namespace Redsilver2.Core.Quests
 
         public string QuestName => questName;
 
+        public void Reset()
+        {
+            onQuestStarted  = new UnityEvent();
+            onQuestFinished = new UnityEvent();
+            isActivated = false;
+            isCompleted = false;
+
+            foreach (QuestProgression _progression in questsProgressions)
+            {
+                _progression.Reset();
+            }
+
+        }
 
         private bool IsDone()
         {
@@ -59,7 +72,7 @@ namespace Redsilver2.Core.Quests
 
                 if (onQuestFinished == null)
                 {
-                    onQuestFinished = new UnityEvent();
+
                 }
 
                 onQuestStarted.AddListener(() =>
@@ -83,8 +96,6 @@ namespace Redsilver2.Core.Quests
 
                                 if (_progression.IsDone() && !isCompleted)
                                 {
-                                    Debug.Log("???!!!");
-
                                     if (IsDone())
                                     {
                                         isCompleted = true;
@@ -109,6 +120,7 @@ namespace Redsilver2.Core.Quests
                 {
                     if (questManager != null)
                     {
+                        Debug.LogWarning("Wtf lol");
                         questManager.UpdateActifQuestsDisplayer();
                         questManager.ShowcaseQuests();
                         questManager.RemoveActifQuest(this);

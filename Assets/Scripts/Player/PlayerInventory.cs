@@ -13,6 +13,9 @@ namespace Redsilver2.Core.Player
     [RequireComponent(typeof(InteractionManager))]
     public class PlayerInventory : PlayerInventoryEvents
     {
+        [SerializeField] private ItemInspection itemInspection;
+
+        [Space]
         [SerializeField] private PlayerHandMotionHandler lightSourceMotionHandler;
         [SerializeField] private PlayerHandMotionHandler itemMotionHandler;
 
@@ -78,6 +81,10 @@ namespace Redsilver2.Core.Player
                 }
             });
 
+            itemInspection.Init();
+
+ 
+
             AddOnItemRemovedEvent((item, inventory, canDrop) =>
             {
                 if (items.Contains(item))
@@ -96,8 +103,14 @@ namespace Redsilver2.Core.Player
             controls.Slot03.performed += OnSlot03InputPerformed;
             controls.Slot04.performed += OnSlot04InputPerformed;
             controls.Drop.performed   += OnDropItemInputPerformed;
+            controls.Inspect.performed += OnInspectInputPerformed;
 
             StartCoroutine(SetStarterItems());
+        }
+
+        public void AddItemInpesctionObject(GameObject gameObject)
+        {
+            itemInspection.SetObjectInspectionParent(gameObject);
         }
 
         public void AddItem(EquippableItem item)
@@ -240,6 +253,17 @@ namespace Redsilver2.Core.Player
                 ChangeEquippedItem(3);
             }
         }
+        private void OnInspectInputPerformed(InputAction.CallbackContext context)
+        {
+            if (context.performed && canSwitchItem)
+            {
+                if (equippedItem != null)
+                {
+                    itemInspection.Enable(this, equippedItem);
+                }
+            }
+        }
+
 
         private void OnLoadSingleSceneEvent(int levelIndex)
         {

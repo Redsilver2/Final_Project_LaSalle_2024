@@ -11,6 +11,7 @@ namespace Redsilver2.Core.Quests
         public override void Enable(QuestProgression progression)
         {
             base.Enable(progression);
+            Debug.LogWarning("Quest Event Added");
 
             switch (questProgressionType)
             {
@@ -56,8 +57,11 @@ namespace Redsilver2.Core.Quests
 
         private void OnItemInteractEvent(Item item)
         {
-            if(item.InteractableName.ToLower() == questProgressionObjectName.ToLower() && questProgression != null)
+            Debug.LogWarning($"{item.InteractableName.ToLower()} && {questProgressionObjectName.ToLower()} && {questProgression}");
+
+            if (item.InteractableName.ToLower() == questProgressionObjectName.ToLower() && questProgression != null)
             {
+                Debug.LogWarning("Quest Progressing");
                 questProgression.Progress(1f);
             }
         }

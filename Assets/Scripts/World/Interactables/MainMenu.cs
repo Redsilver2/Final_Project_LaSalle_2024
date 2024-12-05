@@ -23,7 +23,7 @@ namespace Redsilver2.Core
 
         private void Start()
         {
-            animationController.Init(mainMenuParent, false);
+            animationController.Init(mainMenuParent.GetComponent<Animator>(), false);
             sceneLoader = SceneLoaderManager.Instance;
 
             GameManager.SetCursorVisibility(true);

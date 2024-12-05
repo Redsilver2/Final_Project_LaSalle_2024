@@ -3,9 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Threading;
 using Redsilver2.Core.SceneManagement;
 using Redsilver2.Core.Counters;
+using Redsilver2.Core.Enemy;
 
 namespace Redsilver2.Core.Audio
 {
@@ -13,6 +13,15 @@ namespace Redsilver2.Core.Audio
     {
         [SerializeField] private AudioSource musicSource01;
         [SerializeField] private AudioSource musicSource02;
+
+        [Space]
+        [SerializeField] private AudioSource chaseSource;
+        [SerializeField] private AudioSource searchSource;
+
+
+        [Space]
+        [SerializeField] private AudioClip searchClip;
+        [SerializeField] private AudioClip chaseClip;
 
 
         [SerializeField] private AudioSource worldSourcePrefab;
@@ -22,11 +31,16 @@ namespace Redsilver2.Core.Audio
         private List<AudioSystem> audioSystems;
 
         private AudioSource mainMusicSource = null;
+        private AudioClip   mainMusicClip   = null;
+
         private IEnumerator musicLerpCoroutine;
+        private IEnumerator waitEnemyMusicCoroutine;
+        private IEnumerator[] lerpSourcesCoroutines;
 
         private IEnumerator audioSystemUpdateCoroutine;
+        private IEnumerator enemyMusicCoroutine;
 
-        private static CancellationTokenSource lerpListenerTokenSource;
+        private EnemyState lastEnemyHighestState;
 
         public static AudioManager Instance { get; private set; }
 
@@ -47,18 +61,9 @@ namespace Redsilver2.Core.Audio
 
             SetWorlSourcesPool();
             SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleLevelEvent);
-            SceneLoaderManager.AddOnSingleLevelLoadedEvent(levelIndex =>
-            {
-                if (musicLerpCoroutine != null)
-                {
-                    StopCoroutine(musicLerpCoroutine);
-                }
+            SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnSingleLevelLoadedEvent);
 
-                musicSource01.volume = 0f;
-                musicSource02.volume = 0f;
-
-                Debug.LogWarning("????");
-            });
+            OnSingleLevelLoadedEvent(0);
         }
 
         private void OnLoadSingleLevelEvent(int levelIndex)
@@ -96,6 +101,15 @@ namespace Redsilver2.Core.Audio
             musicSource01.volume = 0f;
             musicSource02.volume = 0f;
 
+            searchSource.clip = searchClip;
+            chaseSource.clip  = chaseClip;
+
+            searchSource.volume = 0f;
+            chaseSource.volume = 0f;
+
+            searchSource.Play();
+            chaseSource.Play();
+
             Debug.LogWarning("????");
         }
 
@@ -117,14 +131,6 @@ namespace Redsilver2.Core.Audio
                 muteMainSource = musicSource02;
             }
 
-
-            if (musicLerpCoroutine != null)
-            {
-                StopCoroutine(musicLerpCoroutine);
-            }
-
-            Debug.Log(nextMainSource);
-
             if (nextMainSource != null)
             {
                 if (nextMainSource.clip != clip)
@@ -135,15 +141,85 @@ namespace Redsilver2.Core.Audio
                     }
 
                     nextMainSource.clip = clip;
-                    nextMainSource.time = time;
-                    nextMainSource.Play();
+
+                    if (clip != null)
+                    {
+                        nextMainSource.time = time;
+                        nextMainSource.Play();
+                    }
+                    else
+                    {
+                        nextMainSource.Stop();
+                    }
                 }
 
                 mainMusicSource = nextMainSource;
+
+                if(musicLerpCoroutine != null) { StopCoroutine(musicLerpCoroutine); }
                 musicLerpCoroutine = LerpSourcesVolume(mainMusicSource, muteMainSource, 5f);
                 StartCoroutine(musicLerpCoroutine);
             }
         }
+        public void LerpEnemyMusic()
+        {
+            if(waitEnemyMusicCoroutine != null) StopCoroutine(waitEnemyMusicCoroutine);
+            waitEnemyMusicCoroutine = WaitEnemyMusic();
+            StartCoroutine(waitEnemyMusicCoroutine);
+        }
+
+        public IEnumerator WaitEnemyMusic()
+        {
+            EnemyState currentHighestEnemyState = EnemyStateController.HighestEnemyState;
+
+            if (lastEnemyHighestState != currentHighestEnemyState)
+            {
+                lastEnemyHighestState = currentHighestEnemyState;
+
+                if ((currentHighestEnemyState < EnemyState.Search && mainMusicSource.clip != mainMusicClip) || (currentHighestEnemyState >= EnemyState.Search && mainMusicSource.clip != null))
+                {
+                    LerpMusicSources(0f, currentHighestEnemyState < EnemyState.Search ? mainMusicClip : null);
+                }
+
+                if (currentHighestEnemyState == EnemyState.Search || currentHighestEnemyState == EnemyState.Chase)
+                {
+                    PlayEnemyMusic();
+                }
+                else
+                {
+                    LerpSourcesVolume(new AudioSource[] { chaseSource, searchSource }, true, 5f, ref lerpSourcesCoroutines);
+                }
+            }
+
+            yield return null;
+        }
+
+        private void PlayEnemyMusic()
+        {
+            AudioSource mainSource = searchSource;
+            AudioSource muteSource = chaseSource;
+            AudioClip clip = searchClip;
+
+            if (lastEnemyHighestState == EnemyState.Chase)
+            {
+                mainSource = chaseSource;
+                muteSource = searchSource;
+                clip = chaseClip;
+            }
+
+            if (mainSource != null)
+            {
+                if (mainSource.volume == 0f)
+                {
+                    mainSource.clip = clip;
+                    mainSource.Play();
+                }
+            }
+
+            if(enemyMusicCoroutine != null) StopCoroutine(enemyMusicCoroutine);
+            enemyMusicCoroutine = LerpSourcesVolume(mainSource, muteSource, 5f);
+            StartCoroutine(enemyMusicCoroutine);
+        }
+
 
         private IEnumerator LerpSourcesVolume(AudioSource mainSource, AudioSource muteSource, float duration)
         {
@@ -156,7 +232,6 @@ namespace Redsilver2.Core.Audio
                 {
                     muteSource.volume = Mathf.Lerp(originalMuteSourceVolume, 0f, value);
                     mainSource.volume = Mathf.Lerp(originalMainSourceVolume, 1f, value);
-
                 }, 
                 () =>
                 {
@@ -166,6 +241,58 @@ namespace Redsilver2.Core.Audio
             }
 
         }
+
+        private void LerpSourcesVolume(AudioSource[] sources, bool isMuted, float duration, ref IEnumerator[] enumerators)
+        {
+            if (enumerators != null)
+            {
+                foreach (IEnumerator enumerator in enumerators)
+                {
+                    if (enumerator != null)
+                    {
+                        StopCoroutine(enumerator);
+                    }
+                }
+            }
+
+            if (sources != null)
+            {
+                List<IEnumerator> results = new List<IEnumerator>();
+
+                if (sources.Length > 0)
+                {
+                    foreach (AudioSource source in sources)
+                    {
+                        if (source != null)
+                        {
+                            float currentVolume  = source.volume;
+                            float targetedVolume = isMuted ? 0f : 1f; 
+
+                            IEnumerator enumerator = Counter.WaitForSeconds(duration, value =>
+                            {
+                                source.volume = Mathf.Lerp(currentVolume, targetedVolume, value);
+                            },
+                            () =>
+                            {
+                                source.volume = 0f;
+                            });
+
+                            results.Add(enumerator);
+                            StartCoroutine(enumerator);
+                        }
+                    }
+                }
+
+                enumerators = results.ToArray();
+            }
+
+        }
+
+        public void SetMainMusicClip(AudioClip clip)
+        {
+            mainMusicClip = clip;
+        }
+
 
         public AudioSource GetAvailableWorldSource(AudioType audioType)
         {

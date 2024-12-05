@@ -52,7 +52,7 @@ namespace Redsilver2.Core.Items
             inventory.AddOnItemAddedEvent(OnItemAddedEvent);
             inventory.AddOnItemRemovedEvent(OnItemRemovedEvent);
 
-            itemAnimationController.Init(gameObject, true);
+            itemAnimationController.Init(GetComponent<Animator>(), true);
             isControlsSet = false;
             Physics.IgnoreCollision(GetComponent<Collider>(), PlayerController.Instance.GetComponent<Collider>());
         }
@@ -78,7 +78,6 @@ namespace Redsilver2.Core.Items
 
             enableControlsCoroutine = EnableControlsCoroutine();
             StartCoroutine(enableControlsCoroutine);
-
         }
 
         public virtual void UnEquip()
