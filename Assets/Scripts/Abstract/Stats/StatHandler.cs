@@ -30,7 +30,7 @@ namespace Redsilver2.Core.Stats
                 currentValue = 0;
             }
 
-            onValueChanged?.Invoke(amount);
+            onValueChanged?.Invoke(currentValue / maxValue);
         }
         protected void Increase(float amount)
         {
@@ -41,7 +41,7 @@ namespace Redsilver2.Core.Stats
                 currentValue = maxValue;
             }
 
-            onValueChanged?.Invoke(amount);
+            onValueChanged?.Invoke(currentValue / maxValue);
         }
 
         public void AddOnValueChangedEvent(UnityAction<float> action)
@@ -50,7 +50,7 @@ namespace Redsilver2.Core.Stats
         }
         public void RemoveOnValueChangedEvent(UnityAction<float> action)
         {
-            onValueChanged?.AddListener(action);
+            onValueChanged?.RemoveListener(action);
         }
     }
 }

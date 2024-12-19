@@ -40,11 +40,12 @@ namespace Redsilver2.Core.Quests
 
             actifQuests = new List<Quest>();
             startQuestCoroutines = new Queue<IEnumerator>();
+
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadSingleSceneEvent);
         }
 
         private void Start()
         {
-
             if (questDisplayer != null)
             {
                 questDisplayer.text = string.Empty;
@@ -52,27 +53,21 @@ namespace Redsilver2.Core.Quests
             }
         }
 
-        private void OnSingleSceneLoadedEvent(int levelIndex)
+        private void OnLoadSingleSceneEvent(int levelIndex)
         {
+            CanvasRenderer canvasRenderer = questDisplayer.canvasRenderer;
+
+            isShowingQuest = false;
+            isShowingAllQuests = false;
+
             StopAllCoroutines();
-            FadeQuestShowcase();
 
-            if (levelIndex == 0)
-            {
-                foreach (Quest quest in actifQuests) quest.Reset();
-                actifQuests.Clear();
-            }
-        }
+            if (canvasRenderer != null) canvasRenderer.SetAlpha(0f);
+            foreach (Quest quest in actifQuests) quest.Reset();
+            foreach (Quest quest in mainQuests)  quest.Reset();
 
-        public void FadeQuestShowcase()
-        {
-            if (questCoroutine != null)
-            {
-                StopCoroutine(questCoroutine);
-            }
-
-            questCoroutine = questDisplayer.canvasRenderer.FadeCanvasRenderer(false, 2f);
-            StartCoroutine(questCoroutine);
+            startQuestCoroutines.Clear();
+            actifQuests.Clear();    
         }
 
         public void ShowcaseQuests()
@@ -91,29 +86,21 @@ namespace Redsilver2.Core.Quests
             if (questDisplayer != null)
             {
                 CanvasRenderer canvasRenderer = questDisplayer.canvasRenderer;
-                yield return canvasRenderer.FadeCanvasRenderer(true, 2f);
+                yield return canvasRenderer.Fade(true, 2f);
                 yield return Counter.WaitForSeconds(3f);
-                yield return canvasRenderer.FadeCanvasRenderer(false, 2f);
+                yield return canvasRenderer.Fade(false, 2f);
             }
         }
 
-        public void UpdateActifQuestsDisplayer()
+        public void UpdateActifQuestsDisplayer(Quest quest)
         {
             if (questDisplayer != null)
             {
-                questDisplayer.text = string.Empty;
-
-                foreach (Quest quest in actifQuests)
-                {
-                    if (quest != null)
-                    {
-                        questDisplayer.text += "\n" + quest.GetString(questNameSize);
-                    }
-                }
+                questDisplayer.text = quest.GetString(questNameSize);
             }
         }
 
-        public void ActivateMainQuest(float waitTime, int index) 
+        public void StartMainQuest(int index, float waitTime) 
         {
             if (mainQuests.Length > 0)
             {
@@ -126,20 +113,23 @@ namespace Redsilver2.Core.Quests
                     index = mainQuests.Length - 1;
                 }
 
-                StartCoroutine(StartQuestCoroutine(mainQuests[index], waitTime));
+                StartQuest(mainQuests[index], waitTime);
             }
         }
 
-        public void StartQuest(string questName, bool isMainQuest, float waitTime)
+        public Quest GetMainQuest(string questName)
+        {
+            return mainQuests.Where(x => x.QuestName.ToLower().Contains(questName.ToLower())).First();
+        }
+
+        public void StartQuest(Quest quest, float waitTime)
         {
             if (startQuestCoroutines.Count > 0)
             {
                 waitTime = 0f;
             }
 
-            Quest quest = mainQuests.Where(x => x.QuestName.ToLower().Contains(questName.ToLower())).First();
-
-            if (quest != null)
+            if (quest != null && !actifQuests.Contains(quest))
             {
                 startQuestCoroutines.Enqueue(StartQuestCoroutine(quest, waitTime));
 
@@ -153,38 +143,24 @@ namespace Redsilver2.Core.Quests
         private IEnumerator StartQuestCoroutine(Quest quest, float waitTime)
         {
             isShowingAllQuests = true;
+            yield return Counter.WaitForSeconds(waitTime);
 
-            if (quest != null && !actifQuests.Contains(quest))
+            quest.Enable(this);
+            actifQuests.Add(quest);
+
+            if (startQuestCoroutines.Count > 0)
             {
-                Quest questCopy = quest;
-                Debug.LogWarning("2");
-                yield return Counter.WaitForSeconds(waitTime);
-                questCopy.Enable(this);
-
-                while (isShowingQuest) yield return null;
-
-                if(startQuestCoroutines.Count > 0)
-                {
-                    Debug.LogWarning("3");
-                    StartCoroutine(startQuestCoroutines.Dequeue());
-                }
-                else
-                {
-                    Debug.LogWarning("4");
-                    isShowingAllQuests = false;
-                }
+                Debug.LogWarning("3");
+                StartCoroutine(startQuestCoroutines.Dequeue());
+            }
+            else
+            {
+                Debug.LogWarning("4");
+                isShowingAllQuests = false;
             }
         }
 
         public bool ContainsQuest(Quest quest) => actifQuests.Contains(quest);
-
-        public void AddActifQuest(Quest quest)
-        {
-            if (quest != null && !ContainsActifQuest(quest))
-            {
-                actifQuests.Add(quest); 
-            }
-        }
         public void RemoveActifQuest(Quest quest)
         {
             if (quest != null && ContainsActifQuest(quest))
@@ -209,16 +185,6 @@ namespace Redsilver2.Core.Quests
             }
 
             return result;
-        }
-
-        private void OnEnable()
-        {
-            SceneLoaderManager.AddOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
-        }
-        private void OnDisable()
-        {
-
-            SceneLoaderManager.RemoveOnSingleLevelLoadedEvent(OnSingleSceneLoadedEvent);
         }
     }
 }

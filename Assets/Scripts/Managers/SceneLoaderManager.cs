@@ -40,13 +40,19 @@ namespace Redsilver2.Core.SceneManagement
             SelectedSingleLevelIndex = SceneManager.GetActiveScene().buildIndex;
         }
 
+        public void ReloadScene()
+        {
+            SelectedSingleLevelIndex = 0;
+            LoadSingleScene(SceneManager.GetActiveScene().buildIndex);
+        }
+
         public void LoadSingleScene(int levelIndex)
         {
             if(levelIndex < 0)
             {
                 levelIndex = 0;
             }
-            else if(levelIndex >= SceneManager.sceneCountInBuildSettings)
+            else if(levelIndex > SceneManager.sceneCountInBuildSettings)
             {
                 levelIndex = SceneManager.sceneCountInBuildSettings - 1;
             }
@@ -57,21 +63,21 @@ namespace Redsilver2.Core.SceneManagement
                 SelectedSingleLevelIndex = levelIndex;
 
                 loadingScreenBackground.gameObject.SetActive(true);
-                StartCoroutine(LoadSingleSceneCoroutine());
+                StartCoroutine(LoadSingleSceneCoroutine(levelIndex));
             }
         }
 
 
 
-        private IEnumerator LoadSingleSceneCoroutine()
+        private IEnumerator LoadSingleSceneCoroutine(int levelIndex)
         {
-            Debug.LogWarning("Level loading... " + SelectedSingleLevelIndex);
-            onLoadSingleScene.Invoke(SelectedSingleLevelIndex);
+            Debug.LogWarning("Level loading... " + levelIndex);
+            onLoadSingleScene.Invoke(levelIndex);
 
             StartCoroutine(AudioManager.LerpAudioListenerVolume(true, loadingScreenAlphaLerpDuration));
-            yield return loadingScreenBackground.FadeCanvasRenderer(true, loadingScreenAlphaLerpDuration);
+            yield return loadingScreenBackground.Fade(true, loadingScreenAlphaLerpDuration);
 
-            AsyncOperation operation = SceneManager.LoadSceneAsync(SelectedSingleLevelIndex);
+            AsyncOperation operation = SceneManager.LoadSceneAsync(levelIndex);
             operation.allowSceneActivation = false;
 
             while (operation.progress < 0.9f)
@@ -83,10 +89,10 @@ namespace Redsilver2.Core.SceneManagement
             operation.allowSceneActivation = true;
 
             Debug.LogWarning($"Level Load Completed");
-            onSingleSceneLoaded.Invoke(SelectedSingleLevelIndex);
+            onSingleSceneLoaded.Invoke(levelIndex);
 
             StartCoroutine(AudioManager.LerpAudioListenerVolume(false, loadingScreenAlphaLerpDuration));
-            yield return loadingScreenBackground.FadeCanvasRenderer(false, loadingScreenAlphaLerpDuration);
+            yield return loadingScreenBackground.Fade(false, loadingScreenAlphaLerpDuration);
 
             IsLoadingSingleScene = false;
             loadingScreenBackground.gameObject.SetActive(false);
@@ -98,7 +104,7 @@ namespace Redsilver2.Core.SceneManagement
             onLoadSingleScene.Invoke(-1);
 
             StartCoroutine(AudioManager.LerpAudioListenerVolume(true, loadingScreenAlphaLerpDuration));
-            yield return loadingScreenBackground.FadeCanvasRenderer(true, loadingScreenAlphaLerpDuration);
+            yield return loadingScreenBackground.Fade(true, loadingScreenAlphaLerpDuration);
             Application.Quit();
         }
 

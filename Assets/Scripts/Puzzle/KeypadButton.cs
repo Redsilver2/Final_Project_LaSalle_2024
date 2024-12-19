@@ -7,20 +7,18 @@ namespace Redsilver2.Core.Interactables
     public class KeypadButton : Interactable
     {
         [SerializeField] private Keypad    keypad;
-        [SerializeField] private AudioClip audioClip;
 
         [Space]
-        [SerializeField] private float maxPositionY;
         [SerializeField] private char  inputCode;
+        [SerializeField] private float pushPositionY;
 
         private bool     canClickButton = true;
-        private Collider collider;
         private Vector3  originalPosition;
 
         protected override void Awake()
         {
             base.Awake();
-            collider = GetComponent<Collider>();
+            Collider collider = GetComponent<Collider>();
             originalPosition = transform.localPosition;
 
             if (keypad != null)
@@ -53,13 +51,17 @@ namespace Redsilver2.Core.Interactables
 
         public virtual void OnInteractKeypadButtonEvent()
         {
-            keypad.InputCode(inputCode);
+            if (keypad != null)
+            {
+                keypad.InputCode(inputCode);
+                keypad.PlaySound();
+            }
         }
 
         private IEnumerator PlayButtonAnimation()
         {
             canClickButton = false;
-            yield return transform.LerpLocalPosition(transform.localPosition + Vector3.down * maxPositionY, 0.5f);
+            yield return transform.LerpLocalPosition(transform.localPosition + Vector3.down * pushPositionY, 0.5f);
             yield return transform.LerpLocalPosition(originalPosition, 0.5f);
             canClickButton = true;
         }

@@ -15,8 +15,6 @@ namespace Redsilver2.Core.Stats
 
         protected float recoveryWaitTime = 1.0f;
         protected float recoverySpeed    = 1.0f;
-
-        private bool isRecovering = false;
         private IEnumerator recoveryCoroutine;
 
         public float DefaultRecoverySpeed => defaultRecoverySpeed;
@@ -41,28 +39,23 @@ namespace Redsilver2.Core.Stats
 
         public void StartRecovery()
         {
-            if (!isRecovering && allowRecovery)
+            if (allowRecovery)
             {
+                StopRecovery();
+
                 if (recoveryCoroutine == null)
                 {
                     recoveryCoroutine = RecoveryCoroutine();
                     StartCoroutine(recoveryCoroutine);
                 }
-
-                isRecovering = true;
             }
         }
         public void StopRecovery()
         {
-            if (isRecovering && allowRecovery)
+            if (recoveryCoroutine != null)
             {
-                if (recoveryCoroutine != null)
-                {
-                    StopCoroutine(recoveryCoroutine);
-                    recoveryCoroutine = null;
-                }
-
-                isRecovering = false;
+                StopCoroutine(recoveryCoroutine);
+                recoveryCoroutine = null;
             }
         }
 

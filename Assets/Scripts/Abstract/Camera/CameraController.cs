@@ -47,6 +47,10 @@ namespace Redsilver2.Core.Controls
             AddOnPathFollowStartedEvent(() => { isFollowingPath = true; });
             AddOnPathFollowCompletedEvent(() => { isFollowingPath = false; });
             ResetClampedRotationValue();
+
+            base.OnEnable();
+            PauseManager.AddOnGamePausedEvent(OnGamePausedEvent);
+            SceneLoaderManager.AddOnLoadSingleSceneEvent(OnLoadLevel);
         }
 
         protected virtual void Update()
@@ -66,16 +70,10 @@ namespace Redsilver2.Core.Controls
             }
         }
 
-        protected override void OnEnable()
+        private void OnLoadLevel(int Index)
         {
-            base.OnEnable();
-            PauseManager.AddOnGamePausedEvent(OnGamePausedEvent);
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
             PauseManager.RemoveOnGamePausedEvent(OnGamePausedEvent);
+            SceneLoaderManager.RemoveOnLoadSingleSceneEvent(OnLoadLevel);
         }
 
         protected abstract void RotateBody();

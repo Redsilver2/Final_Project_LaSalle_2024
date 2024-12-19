@@ -65,7 +65,7 @@ namespace Redsilver2.Core.Subtitles
                 StopCoroutine (visibilitySubtitleCoroutine);    
             }
 
-            visibilitySubtitleCoroutine = subtitleDisplayer.canvasRenderer.FadeCanvasRenderer(isVisible, duration);
+            visibilitySubtitleCoroutine = subtitleDisplayer.canvasRenderer.Fade(isVisible, duration);
             StartCoroutine(visibilitySubtitleCoroutine);
         }
 

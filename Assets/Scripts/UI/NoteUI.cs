@@ -136,7 +136,7 @@ namespace Redsilver2.Core
                 GameManager.SetCursorVisibility(true);
             }
 
-            yield return canvasGroup.FadeCanvasGroup(isVisible, 0.5f);
+            yield return canvasGroup.Fade(isVisible, 0.5f);
 
             if (!isVisible)
             {

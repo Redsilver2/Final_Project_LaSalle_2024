@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,6 +15,12 @@ namespace Redsilver2.Core.Stats
             base.Awake();
             onHealed = new UnityEvent<Health>();
             onDamaged = new UnityEvent<Health>();
+
+            AddOnDamagedEvent(health =>
+            {
+                health.StopRecovery();
+                health.StartRecovery(); 
+            });
         }
 
         public void Heal(float healAmount)
@@ -30,12 +37,17 @@ namespace Redsilver2.Core.Stats
             {
                 onDamaged.Invoke(this);
             }
+            else
+            {
+                StopRecovery();
+            }
         }
 
         public void AddOnHealedEvent(UnityAction<Health> action)
         {
             onHealed?.AddListener(action);
         }
+
         public void RemoveOnHealedEvent(UnityAction<Health> action)
         {
             onHealed?.RemoveListener(action);

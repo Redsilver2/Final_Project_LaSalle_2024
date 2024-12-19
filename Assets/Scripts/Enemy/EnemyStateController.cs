@@ -1,6 +1,7 @@
 using Redsilver2.Core.Audio;
 using Redsilver2.Core.Counters;
 using Redsilver2.Core.Player;
+using Redsilver2.Core.Stats;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace Redsilver2.Core.Enemy
         [SerializeField] private float searchAggressionValueRequirement;
 
         [Space]
-        [SerializeField] private float searchAreaMultiplierRange = 2;
+        [SerializeField] private float attackDamage = 2;
 
         [Space]
         [SerializeField] private Transform[] waypoints;
@@ -120,9 +121,23 @@ namespace Redsilver2.Core.Enemy
             if (controller != null)
             {
                 FootstepAudioHandler footstepAudioHandler = controller.GetComponent<FootstepAudioHandler>();
+                Health health = controller.Health;
 
                 if (footstepAudioHandler != null) {
                     footstepAudioHandler.AddOnFootstepSoundPlayedEvent(OnPlayerFootstepAudioPlayed);
+                }
+
+                if (health != null) 
+                {
+                    health.AddOnValueChangedEvent(value =>
+                    {
+                        if (value <= 0f)
+                        {
+                            
+                            SetEnemyState(EnemyState.Idol);
+                            enabled = false;
+                        }
+                    });
                 }
             }
 
@@ -366,6 +381,7 @@ namespace Redsilver2.Core.Enemy
 
             if (IsAttacking)
             {
+                controller.Health.Damage(attackDamage);
                 agent.velocity = Vector3.zero;
                 agent.speed = 0f;
             }
@@ -447,6 +463,17 @@ namespace Redsilver2.Core.Enemy
         protected virtual void OnDisable()
         {
             PauseManager.RemoveOnGamePausedEvent(OnGamePausedEvent);
+        }
+
+        public static void SetAllEnemyStates(EnemyState enemyState)
+        {
+            foreach(EnemyStateController stateController in enemiesInstances)
+            {
+                if (stateController != null)
+                {
+                    stateController.SetEnemyState(enemyState);
+                }
+            }
         }
 
         private void OnDrawGizmos()

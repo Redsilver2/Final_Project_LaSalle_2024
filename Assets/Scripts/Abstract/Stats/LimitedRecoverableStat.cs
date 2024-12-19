@@ -8,17 +8,13 @@ namespace Redsilver2.Core.Stats
         [Space]
         [SerializeField][Range(0.1f, 1f)] private float maxRecoveryThreshold;
 
-        protected override void Awake()
+        protected sealed override IEnumerator RecoveryCoroutine()
         {
-            base.Awake();
-        }
-
-        protected override IEnumerator RecoveryCoroutine()
-        {
-            float maxCurrentValue = currentValue * maxRecoveryThreshold;
+            float maxCurrentValue = maxValue * maxRecoveryThreshold;
+            Debug.LogWarning("What the fuck... " + maxCurrentValue);
             yield return new WaitForSeconds(defaultRecoveryWaitTime);
-            
-            while(currentValue < maxCurrentValue)
+            Debug.LogWarning("ok");
+            while (currentValue < maxCurrentValue)
             {
                 Increase(recoverySpeed * Time.deltaTime);
                 yield return null;

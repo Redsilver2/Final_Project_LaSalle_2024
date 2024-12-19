@@ -1,8 +1,8 @@
 using Redsilver2.Core.Audio;
 using Redsilver2.Core.Events;
-using Redsilver2.Core.Quests;
 using Redsilver2.Core.SceneManagement;
 using Redsilver2.Core.Stats;
+using Redsilver2.Core.UI;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,6 +12,7 @@ namespace Redsilver2.Core.Player
     [RequireComponent(typeof(Stamina))]
     [RequireComponent(typeof(FootstepAudioHandler))]
     [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(PlayerUI))]
     public class PlayerController : GameObjectEvents
     {
         [SerializeField] private float defaultWalkSpeed;
@@ -23,6 +24,8 @@ namespace Redsilver2.Core.Player
 
         [Space]
         [SerializeField] private float maxGroundCheckRayLenght;
+
+        private PlayerUI uiManager;
 
         private float currentMovementSpeed;
         private float currentGravityForce;
@@ -78,25 +81,45 @@ namespace Redsilver2.Core.Player
             character            = GetComponent<CharacterController>();
             footstepAudioHandler = GetComponent<FootstepAudioHandler>();
 
+            uiManager = GetComponent<PlayerUI>();
+
             controls = inputManager.PlayerControls.Movement;
             inputManager.SetPlayerControlsState(true);
 
-            if (stamina != null)
+            stamina.AddOnValueChangedEvent(value =>
             {
-                stamina.AddOnValueChangedEvent(value =>
-                {
-                    float percentage = stamina.PercentageValue;
+                float percentage = stamina.PercentageValue;
 
-                    if (percentage <= 0f)
-                    {
-                        canRun = false;
-                    }
-                    else if (percentage >= 0.2f && !canRun)
-                    {
-                        canRun = true;
-                    }
-                });
-            }
+                if (percentage <= 0f)
+                {
+                    canRun = false;
+                }
+                else if (percentage >= 0.2f && !canRun)
+                {
+                    canRun = true;
+                }
+            });
+
+            health.AddOnValueChangedEvent(value =>
+            {
+                if (value <= 0f)
+                {
+                    SceneLoaderManager.Instance.ReloadScene();
+                }
+            });
+
+            health.AddOnDamagedEvent(health =>
+            {
+                uiManager.BloodSFX(health.CurrentValue / 0.5f, true);
+            });
+
+            health.AddOnHealedEvent(health =>
+            {
+                uiManager.BloodSFX(health.CurrentValue / 0.5f, false);
+            });
+
+
+
 
             footstepAudioHandler.AddOnFootstepSoundPlayedEvent(transform =>
             {
@@ -149,6 +172,11 @@ namespace Redsilver2.Core.Player
             else
             {
                 isRunning = false;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                health.Damage(health.MaxValue);
             }
         }
 

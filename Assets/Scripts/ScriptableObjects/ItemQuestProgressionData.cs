@@ -53,6 +53,8 @@ namespace Redsilver2.Core.Quests
                     RangedWeapon.RemoveOnReloadWeaponEvent(OnWeaponEvent);
                     break;
             }
+
+            base.Disable(); 
         } 
 
         private void OnItemInteractEvent(Item item)
@@ -61,7 +63,6 @@ namespace Redsilver2.Core.Quests
 
             if (item.InteractableName.ToLower() == questProgressionObjectName.ToLower() && questProgression != null)
             {
-                Debug.LogWarning("Quest Progressing");
                 questProgression.Progress(1f);
             }
         }

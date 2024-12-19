@@ -13,6 +13,9 @@ namespace Redsilver2.Core.Settings
         [SerializeField] private FPSCounter fpsCounter;
         [SerializeField] private GameObject blackBars;
 
+        [Space]
+        [SerializeField] private SelectableSettingUI[] selectableSettings;
+
         private ResolutionSetting       resolutionSetting;
         private FullScreenModeSetting   fullScreenModeSetting;
         private FrameRateLimitSetting   frameRateLimitSetting;  
@@ -26,6 +29,14 @@ namespace Redsilver2.Core.Settings
         public FPSCounter FPSCounter => fpsCounter;
         public Volume GlobalPostProcessVolume => globalPostProcessVolume;
         public GameObject BlackBars => blackBars;
+
+        #if UNITY_EDITOR
+        private void OnValidate()
+        {
+            SelectableSettingUI.SetArray(ref selectableSettings);
+        }
+        #endif
+
 
         private void Awake()
         {
@@ -48,6 +59,11 @@ namespace Redsilver2.Core.Settings
             postProcessingSetting   = new PostProcessingSetting();
             shadowResolutionSetting = new ShadowResolutionSetting();
             shadowQualitySetting    = new ShadowQualitySetting();
+
+            foreach(SelectableSettingUI selectableSetting in selectableSettings)
+            {
+                selectableSetting.Enable();            
+            }
         }
 
         public void SetSettingUI(Button nextButton, Button previousButton, SettingType settingType)

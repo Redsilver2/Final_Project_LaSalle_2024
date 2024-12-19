@@ -117,7 +117,6 @@ namespace Redsilver2.Core
             if (TryGetAnimationDataByKeyword(keyword, out AnimationData data))
             {
                 animationDatas = this.animationDatas.Where(x => x.Compare(keyword)).ToArray();
-                Debug.LogError(animationDatas.Length);
                 return true;
             }
 

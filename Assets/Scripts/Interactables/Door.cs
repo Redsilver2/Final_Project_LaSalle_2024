@@ -1,3 +1,4 @@
+using Redsilver2.Core.Items;
 using System.Collections;
 using UnityEngine;
 
@@ -5,6 +6,7 @@ namespace Redsilver2.Core.Interactables
 {
     public class Door : Interactable
     {
+        [Space]
         [SerializeField] private Quaternion desiredRotation;
 
         [SerializeField] private string keyName;
@@ -13,7 +15,6 @@ namespace Redsilver2.Core.Interactables
         private bool canRotate =  true;
         private bool isUnlocked = true;
         private Quaternion originalRotation;
-
         private IEnumerator rotationCoroutine;
 
         protected override void Awake()
@@ -34,12 +35,28 @@ namespace Redsilver2.Core.Interactables
             });
         }
 
+        public void SetLockState(Key key)
+        {
+            if (key != null && keyName != string.Empty)
+            {
+                if (keyName.ToLower().Contains(key.InteractableName.ToLower()))
+                {
+                    isUnlocked = !isUnlocked;
+                }
+            }
+        }
+
         public override void Interact()
         {
             if (isUnlocked && canRotate)
             {
                 base.Interact();
             }
+        }
+
+        public override string GetName()
+        {
+            return base.GetName() + (isUnlocked ? "Unlocked" : "Locked");
         }
 
         private IEnumerator Rotate(Quaternion rotation, float duration)

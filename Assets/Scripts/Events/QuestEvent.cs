@@ -7,7 +7,6 @@ namespace Redsilver2.Core.Events
     public class QuestEvent : GameEvent
     {
         [SerializeField] private string questName;
-        [SerializeField] private bool isMainQuest;
         [SerializeField] private float  waitTime;
         public override void Execute()
         {
@@ -15,7 +14,7 @@ namespace Redsilver2.Core.Events
 
             if (questManager != null) 
             {
-                questManager.StartQuest(questName, isMainQuest, waitTime);
+                questManager.StartQuest(questManager.GetMainQuest(questName), waitTime);
             }
         }
     }

@@ -35,7 +35,7 @@ namespace Redsilver2.Core {
             });
         }
 
-        public static IEnumerator FadeCanvasRenderer(this CanvasRenderer renderer, bool isVisible, float duration)
+        public static IEnumerator Fade(this CanvasRenderer renderer, bool isVisible, float duration)
         {
             float targetAlpha = isVisible ? 1f : 0f;
             float currentAlpha = renderer.GetAlpha();
@@ -50,7 +50,7 @@ namespace Redsilver2.Core {
             });
         }
 
-        public static IEnumerator FadeCanvasGroup(this CanvasGroup canvasGroup, bool isVisible, float duration)
+        public static IEnumerator Fade(this CanvasGroup canvasGroup, bool isVisible, float duration)
         {
             float targetAlpha = isVisible ? 1f : 0f;
             float currentAlpha = canvasGroup.alpha;

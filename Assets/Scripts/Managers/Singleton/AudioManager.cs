@@ -72,10 +72,9 @@ namespace Redsilver2.Core.Audio
 
             if (levelIndex != 0)
             {
-                Debug.LogWarning("Enabling Audio Manager");
-
                 if (audioSystemUpdateCoroutine == null)
                 {
+                    Debug.LogWarning("Enabling Audio Manager");
                     audioSystemUpdateCoroutine = AudioSystemsUpdate();
                     StartCoroutine(audioSystemUpdateCoroutine);
                 }
@@ -87,16 +86,14 @@ namespace Redsilver2.Core.Audio
                 if (audioSystemUpdateCoroutine != null)
                 {
                     StopCoroutine(audioSystemUpdateCoroutine);
+                    audioSystemUpdateCoroutine = null;
                 }
             }
         }
 
         private void OnSingleLevelLoadedEvent(int levelIndex)
         {
-            if (musicLerpCoroutine != null)
-            {
-                StopCoroutine(musicLerpCoroutine);
-            }
+            StopAllCoroutines();
 
             musicSource01.volume = 0f;
             musicSource02.volume = 0f;

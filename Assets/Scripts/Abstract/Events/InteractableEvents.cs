@@ -5,17 +5,22 @@ namespace Redsilver2.Core.Events
 {
     public abstract class InteractableEvents : GameObjectEvents
     {
-        private UnityEvent<bool> onInteractOnce;
-        private UnityEvent<bool> onInteract;
+        [SerializeField] private UnityEvent<bool> onInteractOnce;
+        [SerializeField] private UnityEvent<bool> onInteract;
+
+        UnityAction event01;
 
         protected override void Awake()
         {
-            onInteractOnce = new UnityEvent<bool>();
-            onInteract = new UnityEvent<bool>();
-
             base.Awake();
+            event01 = OnMessagedTriggered;
+            event01.Invoke();
         }
 
+        public void OnMessagedTriggered()
+        {
+            Debug.Log("This Object's Event Triggered");
+        }
 
         public void AddOnInteractOnceEvent(UnityAction<bool> action)
         {
